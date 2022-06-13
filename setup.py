@@ -35,7 +35,7 @@ setup(
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3 :: Only',
     ],
-    scripts=['cli/list_interactions.py', 'cli/list_studies.py', 'cli/list_companies.py', 'cli/list_raw_objects.py'],
+    #scripts=['cli/list_interactions.py', 'cli/list_studies.py', 'cli/list_companies.py', 'cli/list_raw_objects.py'],
     packages=['mr_python', 'mr_python/transformers', 'mr_python/extractors', 'mr_python/loaders', 'mr_python/api'],
     python_requires='>=3.6, <4',
     project_urls={  # Optional

@@ -134,8 +134,6 @@ class utilities:
             finally:
                 return 1, 'Successfully created directory [' + dirname + '].'
         else:
-            logging.warning(
-                'The directory [' + dirname + '] appears to already exist, no action performed.')
             return 2, 'The directory [' + dirname + '] appears to already exist, no action performed.'
 
     def check_file_system_object(self, full_filename):
