@@ -1,3 +1,5 @@
+# TODO this has been deprecated and should be removed
+
 import hashlib
 
 def hash_it(self, stringToHash, HASH='sha256'):
