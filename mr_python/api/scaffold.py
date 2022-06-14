@@ -27,13 +27,13 @@ class mr_rest:
         """
         # Extract key items from the credential and extend with endpoint
         server_type = self.CRED['server_type']
-        url = self.CRED['rest_url'] + endpoint
+        url = self.CRED['rest_server'] + endpoint
         api_key = self.CRED['api_key']
 
         # Try to make the request
         try:
             # Detect if the backend server type is either a mr_server or json_server  
-            resp_obj = requests.get(url, headers={'Authorization': api_key}) if server_type == "mr" else requests.put(url)
+            resp_obj = requests.get(url, headers={'Authorization': api_key}) if server_type == "mr" else requests.get(url)
             resp_obj.raise_for_status()
 
         # If the request fails then return the error and False

@@ -20,8 +20,8 @@ class Auth:
 
     NOTE: In general the logout function isn't implemented at this time.
     """
-    def __init__(self, rest_server_url, user_name=None, secret=None, api_key=None, server_type="mr"):
-        self.REST_URL = rest_server_url
+    def __init__(self, rest_server, user_name=None, secret=None, api_key=None, server_type="mr"):
+        self.REST_SERVER = rest_server
         self.SERVER_TYPE = server_type
         self.USER = user_name
         self.SECRET = secret
@@ -30,12 +30,12 @@ class Auth:
     def login(self):
         if self.SERVER_TYPE == "json":
             auth = json_auth(
-                rest_server_url=self.REST_URL, user_name=self.USER, secret=self.SECRET
+                rest_server=self.REST_SERVER, user_name=self.USER, secret=self.SECRET
             )
             return auth.login()
         elif self.SERVER_TYPE == 'mr':
             auth = mr_auth(
-                rest_server_url=self.REST_URL, user_name=self.USER, secret=self.SECRET, 
+                rest_server=self.REST_SERVER, user_name=self.USER, secret=self.SECRET, 
                 api_key=self.API_KEY
             )
         else:
@@ -58,7 +58,7 @@ class Users(BaseObjects):
         #self.rest = mr_users(credential) if self.CRED['server_type'] == 'mr' else json_users(credential)
         self.rest = mr_users(credential)
 
-    def get_all(self, endpoint):
+    def get_all(self, endpoint='/v1/users'):
         return super().get_all(self.rest, endpoint)
 
 

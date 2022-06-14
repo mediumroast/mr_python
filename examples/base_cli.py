@@ -27,20 +27,27 @@ class MrCLI:
             help="Fully qualified filename for storing the configuration variables.",
             type=str,
             dest='conf_file',
-            required=True,
-            default=str(pathlib.Path.home()) + '/.mediumroast/config.ini'
+            default=str(pathlib.Path.home()) + '/.mediumroast/config.ini',
         )
         parser.add_argument(
             "--rest_url",
             help="The URL of the target REST server",
             type=str,
-            dest="rest_url",
+            dest="rest_server",
         )
         parser.add_argument(
             "--api_key",
             help="The API key needed to talk to the backend",
             type=str,
             dest="api_key",
+        )
+        parser.add_argument(
+            "--server_type",
+            help="The API key needed to talk to the backend",
+            type=str,
+            dest="server_type",
+            choices=['json', 'mr'],
+            default='mr'
         )
         parser.add_argument(
             "--user", help="User name", type=str, dest="user"
@@ -53,7 +60,7 @@ class MrCLI:
             help="Specify if the STDOUT format is pretty printed or not",
             dest="pretty_output",
             action='store_true',
-            default=False,
+            default=True,
         )
 
         # Gather general function oriented switches to control the behavior of the CLI
@@ -106,14 +113,19 @@ class MrCLI:
 
         # Explicitly set the essential environment variables to None
         env = {
-            'rest_url': None,
+            'rest_server': None,
             'user': None,
             'secret': None,
             'api_key': None,
+            'server_type': None
         }
 
         # Now set the environment up in the priority as documented above
-        env['rest_url'] = cli_args.rest_url if cli_args.rest_url else config.get('DEFAULT', )
+        env['rest_server'] = cli_args.rest_server if cli_args.rest_server else config['DEFAULT']['rest_server']
+        env['user'] = cli_args.user if cli_args.user else config['DEFAULT']['user']
+        env['secret'] = cli_args.secret if cli_args.secret else config['DEFAULT']['secret']
+        env['api_key'] = cli_args.api_key if cli_args.api_key else config['DEFAULT']['api_key']
+        env['server_type'] = cli_args.server_type if cli_args.server_type else config['DEFAULT']['server_type']
 
-        pass
+        return True, {"status_code": "SUCCEEDED"}, env
 
