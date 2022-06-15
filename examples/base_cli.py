@@ -77,10 +77,16 @@ class MrCLI:
             dest="guid_by_name",
         )
         parser.add_argument(
-            "--get_by_guid", help="Get object by GUID", type=str, dest="by_guid"
+            "--get_by_id", help="Get object by ID", type=str, dest="by_id"
         )
         parser.add_argument(
             "--get_by_name", help="Get object by name", type=str, dest="by_name"
+        )
+        parser.add_argument(
+            "--create", help="Add an object to the backend by specifying a JSON file", type=str, dest="json_obj"
+        )
+        parser.add_argument(
+            "--delete", help="Delete an object to the backend", type=str, dest="obj_id"
         )
 
         # Parse the CLI
