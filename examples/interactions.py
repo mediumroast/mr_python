@@ -18,8 +18,8 @@ if __name__ == "__main__":
 
     # Instantiate the base CLI object
     my_cli = base_cli.MrCLI(
-        name='companies', 
-        description='Example CLI utility to get and manipulate interaction information from the mediumroast.io backend.'
+        name='interactions', 
+        description='Example CLI utility to get and manipulate interaction information in the mediumroast.io backend.'
     )
     
     # Get the command line arguments, config file and then set the environment

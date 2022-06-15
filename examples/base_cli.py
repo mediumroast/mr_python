@@ -86,7 +86,7 @@ class MrCLI:
             "--create", help="Add an object to the backend by specifying a JSON file", type=str, dest="json_obj"
         )
         parser.add_argument(
-            "--delete", help="Delete an object to the backend", type=str, dest="obj_id"
+            "--delete", help="Delete an object from the backend by specifyin the object's id", type=str, dest="obj_id"
         )
 
         # Parse the CLI
