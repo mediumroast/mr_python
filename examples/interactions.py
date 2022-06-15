@@ -10,7 +10,7 @@ import json
 
 # mediumroast.io SDK specific imports
 from mr_python.api.mr_server import Auth as authenticate
-from mr_python.api.mr_server import Users as user
+from mr_python.api.mr_server import Interactions as interaction
 from mr_python.helpers import utilities as util
 import base_cli
 
@@ -18,8 +18,8 @@ if __name__ == "__main__":
 
     # Instantiate the base CLI object
     my_cli = base_cli.MrCLI(
-        name='users', 
-        description='Example CLI utility to get and manipulate user information from the mediumroast.io backend.'
+        name='companies', 
+        description='Example CLI utility to get and manipulate interaction information from the mediumroast.io backend.'
     )
     
     # Get the command line arguments, config file and then set the environment
@@ -38,7 +38,7 @@ if __name__ == "__main__":
     credential = auth_ctl.login()
 
     # Create the API controller
-    api_ctl = user(credential)
+    api_ctl = interaction(credential)
 
     # Explicitly set these variables to empty strings
     [success, msg, resp] = [str, str, str]
@@ -52,7 +52,7 @@ if __name__ == "__main__":
                     my_cli.printer.pprint(resp)
                 else:
                     print(json.dumps(resp))
-        print('Successfully created [' + str(util.total_item(my_objs)) + '] user objects, exiting.')
+        print('Successfully created [' + str(util.total_item(my_objs)) + '] interaction objects, exiting.')
         sys.exit(0)
     elif my_args.by_name:
         # Get a single user by name
