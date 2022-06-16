@@ -1,0 +1,31 @@
+[
+    {
+        "companyName": "HDS",
+        "industry": "Manufacturing | Industrial And Commercial Machinery And Computer Equipment | Electronic Computers",
+        "role": "User",
+        "url": "Unknown",
+        "streetAddress": "Unknown",
+        "city": "SANTA CLARA",
+        "stateProvince": "CA",
+        "country": "US",
+        "region": "AMER",
+        "phone": "Unknown",
+        "simpleDesc": "A Japanese owned Information and Communications products company that focuses on computer data storage.",
+        "cik": "Unknown",
+        "stockSymbol": "Unknown",
+        "Recent10kURL": "Unknown",
+        "Recent10qURL": "Unknown",
+        "zipPostal": "Unknown",
+        "linkedStudies": {
+            "Caffeine Customer Insights": "dccd4e2568bfd5733d3ef9f3f8dad09ea0da0e87325ccafeac1abfd0c52c23ff",
+            "Customer Insights": "f3eae874b1fba924e81d5963a2bc7752ab8d2acd906bb2944f6243f163a6bf23"
+        },
+        "longitude": -121.95511999999997,
+        "latitude": 37.355800000000045,
+        "notes": {
+            "1": {
+                "2065": "This is an example note created for the 'Company Object: [HDS]' object on Thu Mar  3 16:21:07 2022 by a Mediumroast SDK load utility."
+            }
+        }
+    }
+]

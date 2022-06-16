@@ -43,7 +43,7 @@ class mr_rest:
         # Return True, status code and resulting json
         return True, {"status_code": resp_obj.status_code}, resp_obj.json()
 
-    def put_obj(self, endpoint, obj):
+    def post_obj(self, endpoint, obj):
         """Put an object using endpoint and a pythonic object.
 
         If the request succeeds a boolean status of True, the status code and the JSON is returned.
@@ -51,21 +51,22 @@ class mr_rest:
         """
         # Extract key items from the credential and extend with endpoint
         server_type = self.CRED['server_type']
-        url = self.CRED['rest_url'] + endpoint
+        url = self.CRED['rest_server'] + endpoint
         api_key = self.CRED['api_key']
 
         # Try to make the request
         try:  
             # Detect if the backend server type is either a mr_server or json_server
-            resp_obj = requests.put(url, headers={'Authorization': api_key}, json=obj) if server_type == "mr" else requests.put(url, json=obj)
+            resp_obj = requests.post(url, headers={'Authorization': api_key}, json=obj) if server_type == "mr" else requests.post(url, json=obj)
             resp_obj.raise_for_status()
 
         # If the request fails then return the error and False
         except requests.exceptions.HTTPError as err:  
-            return False, {"status_code": resp_obj.status_code, "message": err}
+            print(err)
+            return False, {"status_code": resp_obj.status_code, "message": err}, None
         
         # Return True, status code and resulting json
-        return True, {"status_code": resp_obj.status_code}, resp_obj.json()
+        return True, {"status_code": resp_obj.status_code}, resp_obj.txt
 
     def patch_obj(self, endpoint, obj):
         """Patch an object using endpoint and a pythonic object.

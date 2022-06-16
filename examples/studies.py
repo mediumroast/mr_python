@@ -59,7 +59,7 @@ if __name__ == "__main__":
         [success, msg, resp] = api_ctl.get_by_name(my_args.by_name)
     elif my_args.by_id:
         # Get a single user by id
-        [success, msg, resp] = api_ctl.get_by_name(my_args.by_id)
+        [success, msg, resp] = api_ctl.get_by_id(my_args.by_id)
     else:
         # Get all users
         [success, msg, resp] = api_ctl.get_all()

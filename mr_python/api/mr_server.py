@@ -52,7 +52,7 @@ class BaseObjects:
 
     def create_obj(self, obj, endpoint='register'):
         full_endpoint = '/' + '/'.join([self.API_VERSION, self.OBJ_TYPE, endpoint])
-        return self.rest.put_obj(full_endpoint, obj)
+        return self.rest.post_obj(full_endpoint, obj)
         
     def update_obj(self, id, obj, endpoint):
         full_endpoint = '/' + '/'.join([self.API_VERSION, self.OBJ_TYPE, endpoint])

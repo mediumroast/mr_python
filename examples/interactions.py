@@ -44,7 +44,7 @@ if __name__ == "__main__":
     [success, msg, resp] = [str, str, str]
     if my_args.json_obj:
         # Create objects from a json file
-        my_objs = util.json_read(my_args.json_obj)
+        my_objs = util.json_read(file_name=my_args.json_obj)
         for obj in my_objs:
             [success, msg, resp] = api_ctl.create_obj(obj)
             if success:
@@ -59,7 +59,7 @@ if __name__ == "__main__":
         [success, msg, resp] = api_ctl.get_by_name(my_args.by_name)
     elif my_args.by_id:
         # Get a single user by id
-        [success, msg, resp] = api_ctl.get_by_name(my_args.by_id)
+        [success, msg, resp] = api_ctl.get_by_id(my_args.by_id)
     else:
         # Get all users
         [success, msg, resp] = api_ctl.get_all()

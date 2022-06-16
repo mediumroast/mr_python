@@ -11,7 +11,7 @@ import json
 # mediumroast.io SDK specific imports
 from mr_python.api.mr_server import Auth as authenticate
 from mr_python.api.mr_server import Companies as company
-from mr_python.helpers import utilities as util
+from mr_python.helpers import utilities
 import base_cli
 
 if __name__ == "__main__":
@@ -21,6 +21,7 @@ if __name__ == "__main__":
         name='companies', 
         description='Example CLI utility to get and manipulate company information in the mediumroast.io backend.'
     )
+    util = utilities()
     
     # Get the command line arguments, config file and then set the environment
     my_args = my_cli.get_cli_args()
@@ -44,7 +45,7 @@ if __name__ == "__main__":
     [success, msg, resp] = [str, str, str]
     if my_args.json_obj:
         # Create objects from a json file
-        my_objs = util.json_read(my_args.json_obj)
+        [success, my_objs] = util.json_read(my_args.json_obj)
         for obj in my_objs:
             [success, msg, resp] = api_ctl.create_obj(obj)
             if success:
@@ -59,7 +60,7 @@ if __name__ == "__main__":
         [success, msg, resp] = api_ctl.get_by_name(my_args.by_name)
     elif my_args.by_id:
         # Get a single user by id
-        [success, msg, resp] = api_ctl.get_by_name(my_args.by_id)
+        [success, msg, resp] = api_ctl.get_by_id(my_args.by_id)
     else:
         # Get all users
         [success, msg, resp] = api_ctl.get_all()
