@@ -41,24 +41,29 @@ class BaseObjects:
     def get_by_name(self, name, endpoint='getbyx'):
         full_endpoint = '/' + '/'.join([self.API_VERSION, self.OBJ_TYPE, endpoint])
         my_obj = {'getByX': 'name', 'xEquals': name}
+        return self.rest.get_obj(full_endpoint, my_obj)
 
     def get_by_id(self, id, endpoint='getbyx'):
         full_endpoint = '/' + '/'.join([self.API_VERSION, self.OBJ_TYPE, endpoint])
         my_obj = {'getByX': 'id', 'xEquals': id}
+        return self.rest.get_obj(full_endpoint, my_obj)
 
     def get_by_x(self, attribute, value, endpoint='getbyx'):
         full_endpoint = '/' + '/'.join([self.API_VERSION, self.OBJ_TYPE, endpoint])
         my_obj = {'getByX': attribute, 'xEquals': value} 
+        return self.rest.get_obj(full_endpoint, my_obj)
 
     def create_obj(self, obj, endpoint='register'):
         full_endpoint = '/' + '/'.join([self.API_VERSION, self.OBJ_TYPE, endpoint])
         return self.rest.post_obj(full_endpoint, obj)
         
-    def update_obj(self, id, obj, endpoint):
+    def update_obj(self, obj, endpoint='update'):
         full_endpoint = '/' + '/'.join([self.API_VERSION, self.OBJ_TYPE, endpoint])
+        return self.rest.post_obj(full_endpoint, obj)
 
     def delete_obj(self, id, endpoint):
-        full_endpoint = '/' + '/'.join([self.API_VERSION, self.OBJ_TYPE, endpoint])     
+        full_endpoint = '/' + '/'.join([self.API_VERSION, self.OBJ_TYPE, endpoint])
+        raise NotImplementedError     
 
 class Users(BaseObjects):
     def __init__(self, credential):

@@ -55,12 +55,29 @@ if __name__ == "__main__":
                     print(json.dumps(resp))
         print('Successfully created [' + str(util.total_item(my_objs)) + '] company objects, exiting.')
         sys.exit(0)
+    elif my_args.update_obj:
+        # Create objects from a json file
+        my_obj = json.loads(my_args.update_obj)
+        [success, msg, resp] = api_ctl.update_obj(my_obj)
+        if success:
+            if my_args.pretty_output:
+                my_cli.printer.pprint(resp)
+            else:
+                print(json.dumps(resp))
+        print('Successfully updated [' + my_obj['id'] + '] company objects, exiting.')
+        sys.exit(0)
     elif my_args.by_name:
         # Get a single user by name
         [success, msg, resp] = api_ctl.get_by_name(my_args.by_name)
     elif my_args.by_id:
         # Get a single user by id
         [success, msg, resp] = api_ctl.get_by_id(my_args.by_id)
+    elif my_args.by_x:
+        # Get a single user by an arbitrary attribute X
+        my_obj = json.loads(my_args.by_x)
+        attr = list(my_obj.keys())[0]
+        value = list(my_obj.values())[0]
+        [success, msg, resp] = api_ctl.get_by_x(attr, value)
     else:
         # Get all users
         [success, msg, resp] = api_ctl.get_all()

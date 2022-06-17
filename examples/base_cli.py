@@ -65,25 +65,31 @@ class MrCLI:
 
         # Gather general function oriented switches to control the behavior of the CLI
         parser.add_argument(
-            "--get_name_by_guid",
+            "--get_name_by_id",
             help="Get study name by GUID",
             type=str,
-            dest="name_by_guid",
+            dest="name_by_id",
         )
         parser.add_argument(
-            "--get_guid_by_name",
+            "--get_id_by_name",
             help="Get GUID by study name",
             type=str,
-            dest="guid_by_name",
+            dest="id_by_name",
         )
         parser.add_argument(
             "--get_by_id", help="Get object by ID", type=str, dest="by_id"
+        )
+        parser.add_argument(
+            "--get_by_x", help="Get object by an arbitrary attribute as specified by JSON (ex \'{\"zip_postal\":\"92131\"}\')", type=str, dest="by_x"
         )
         parser.add_argument(
             "--get_by_name", help="Get object by name", type=str, dest="by_name"
         )
         parser.add_argument(
             "--create", help="Add an object to the backend by specifying a JSON file", type=str, dest="json_obj"
+        )
+        parser.add_argument(
+            "--update", help="Update an object from the backend by specifying the object's id and value to update in JSON", type=str, dest="update_obj"
         )
         parser.add_argument(
             "--delete", help="Delete an object from the backend by specifyin the object's id", type=str, dest="obj_id"
