@@ -11,16 +11,17 @@ import json
 # mediumroast.io SDK specific imports
 from mr_python.api.mr_server import Auth as authenticate
 from mr_python.api.mr_server import Users as user
-from mr_python.helpers import utilities as util
+from mr_python.helpers import utilities
 import base_cli
 
 if __name__ == "__main__":
 
-    # Instantiate the base CLI object
+    # Instantiate the base CLI object and utility object
     my_cli = base_cli.MrCLI(
-        name='get_users', 
-        description='Example CLI utility to pull user information from the mediumroast.io backend.'
+        name='users', 
+        description='Example CLI utility to get and manipulate user information in the mediumroast.io backend.'
     )
+    util = utilities()
     
     # Get the command line arguments, config file and then set the environment
     my_args = my_cli.get_cli_args()
@@ -44,14 +45,16 @@ if __name__ == "__main__":
     [success, msg, resp] = [str, str, str]
     if my_args.json_obj:
         # Create objects from a json file
-        my_objs = util.json_read(my_args.json_obj)
+        [success, my_objs] = util.json_read(my_args.json_obj)
         for obj in my_objs:
             [success, msg, resp] = api_ctl.create_obj(obj)
+            print(msg)
             if success:
                 if my_args.pretty_output:
                     my_cli.printer.pprint(resp)
                 else:
                     print(json.dumps(resp))
+                    sys.exit(-1)
         print('Successfully created [' + str(util.total_item(my_objs)) + '] user objects, exiting.')
         sys.exit(0)
     elif my_args.by_name:
@@ -59,7 +62,7 @@ if __name__ == "__main__":
         [success, msg, resp] = api_ctl.get_by_name(my_args.by_name)
     elif my_args.by_id:
         # Get a single user by id
-        [success, msg, resp] = api_ctl.get_by_name(my_args.by_id)
+        [success, msg, resp] = api_ctl.get_by_id(my_args.by_id)
     else:
         # Get all users
         [success, msg, resp] = api_ctl.get_all()
@@ -70,6 +73,7 @@ if __name__ == "__main__":
             my_cli.printer.pprint(resp)
         else:
             print(json.dumps(resp))
+            sys.exit(-1)
 
     else:
         print("CLI ERROR: This is a generic error message, as something went wrong.")
