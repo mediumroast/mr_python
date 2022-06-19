@@ -16,7 +16,9 @@ if __name__ == "__main__":
     # Instantiate the base CLI object
     my_cli = base_cli.MrCLI(
         name=object_type, 
-        description='Example CLI utility to get and manipulate ' + object_type + ' information in the mediumroast.io backend.'
+        description='Example CLI utility to get and manipulate ' + object_type + 
+            ' information in the mediumroast.io backend. Running without any arguments or switches will cause the default behavior of retrieving all ' + object_type + 
+            ' objects.'
     )
 
     # Perform the authentication

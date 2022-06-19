@@ -186,7 +186,7 @@ class MrCLI:
             else:
                     print('CLI Error: ', msg)
                     sys.exit(-1)
-            print('Successfully updated [' + my_obj['id'] + '] ' + object_type + 'objects, exiting.')
+            print('Successfully updated [' + my_obj['id'] + '] ' + object_type + ' objects, exiting.')
             sys.exit(0)
         elif self.args.by_name:
             # Get a single user by name

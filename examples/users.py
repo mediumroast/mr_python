@@ -4,6 +4,8 @@ __author__ = "Michael Hay"
 __date__ = '2022-June-11'
 __copyright__ = "Copyright 2022 Mediumroast, Inc. All rights reserved."
 
+# TODO Make users compatible with all other CLIs
+
 # Python standard library imports
 import sys
 import json
