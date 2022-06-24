@@ -3,6 +3,8 @@ __author__ = "Michael Hay"
 __date__ = '2022-June-11'
 __copyright__ = "Copyright 2022 mediumroast.io. All rights reserved."
 
+# TODO remove server_type from the implementation as it is deprecated
+
 import requests
 
 class mr_rest:
@@ -62,7 +64,6 @@ class mr_rest:
 
         # If the request fails then return the error and False
         except requests.exceptions.HTTPError as err:  
-            print(err)
             return False, {"status_code": resp_obj.status_code, "message": err}, None
         
         # Return True, status code and resulting json

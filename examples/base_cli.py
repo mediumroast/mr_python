@@ -165,6 +165,7 @@ class MrCLI:
             for obj in my_objs:
                 [success, msg, resp] = api_controller.create_obj(obj)
                 if success:
+                    print("Backend response: ", end="")
                     if self.args.pretty_output:
                         self.printer.pprint(resp)
                     else:
@@ -172,13 +173,14 @@ class MrCLI:
                 else:
                     print('An error occured: ', msg)
                     sys.exit(-1)
-            print('Successfully created [' + str(self.util.total_item(my_objs)) + '] ' + object_type + 'objects, exiting.')
+            print('Successfully created [' + str(self.util.total_item(my_objs)) + '] ' + object_type + ' object(s), exiting.')
             sys.exit(0)
         elif self.args.update_obj:
             # Create objects from a json file
             my_obj = json.loads(self.args.update_obj)
             [success, msg, resp] = api_controller.update_obj(my_obj)
             if success:
+                print("Backend response: ", end="")
                 if self.args.pretty_output:
                     self.printer.pprint(resp)
                 else:
@@ -186,7 +188,7 @@ class MrCLI:
             else:
                     print('CLI Error: ', msg)
                     sys.exit(-1)
-            print('Successfully updated [' + my_obj['id'] + '] ' + object_type + ' objects, exiting.')
+            print('Successfully updated ' + object_type + ' object with id [' + str(my_obj['id']) + '] exiting.')
             sys.exit(0)
         elif self.args.by_name:
             # Get a single user by name
