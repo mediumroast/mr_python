@@ -33,7 +33,7 @@ class Transform:
             Using the attributes set when the object was constructed get the data from the file.
     """
 
-    def __init__(self, rewrite_config_dir="../src/mediumroast/transformers/", debug=False):
+    def __init__(self, rewrite_rule_dir, debug=False):
         self.RAW_COMPANY_NAME = 7
         self.RAW_STUDY_NAME = 6
         self.RAW_DATE = 0
@@ -42,7 +42,7 @@ class Transform:
         self.STATE_PROVINCE = 3
         self.CITY = 4
         self.RULES = {
-            'dir': rewrite_config_dir,
+            'dir': rewrite_rule_dir,
             'company': 'company.ini',
             'study': 'study.ini',
             'interaction': 'interaction.ini'
@@ -50,7 +50,7 @@ class Transform:
 
         # TODO wrap a try catch loop around the config file read
         self.rules = conf.ConfigParser()
-        self.rules.read(self.RULES['dir'] + self.RULES['company'])
+        self.rules.read(self.RULES['dir'] + '/' + self.RULES['company'])
 
         # This imports the local utilies from mr_sdk for Python
         self.util = utilities()
@@ -66,8 +66,7 @@ class Transform:
         """Internal method to rewrite or augment key aspects of a company object as per definitions in the configuration file."""
 
         # Add the items which are either rewritten or not present in the file_name metadata.
-        industry = self.rules.get('industries', company_name) if self.rules.has_option(
-            'industries', company_name) else self.rules.get('DEFAULT', 'industry')
+        industry = self.rules['industries'][company_name] if self.rules['industries'][company_name] else self.rules['DEFAULT']['industry']
         role = self.rules.get('roles', company_name) if self.rules.has_option(
             'roles', company_name) else self.rules.get('DEFAULT', 'role')
         description = self.rules.get('descriptions', company_name) if self.rules.has_option(

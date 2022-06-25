@@ -5,16 +5,28 @@ __author__ = "Michael Hay"
 __date__ = "2022-June-25"
 __copyright__ = "Copyright 2022 Mediumroast, Inc. All rights reserved."
 
-
+# Import system libraries
 import sys
 import pprint
 import argparse
 import pathlib
+
+# Import utilities
+from mr_python.helpers import utilities as util
+
+# Import authentication
+from mr_python.api.mr_server import Auth as authenticate
+
+# Import extractor
 from mr_python.extractors.s3bucket import Extract as mr_extract_s3
+
+# Import transformers
 from mr_python.transformers.company import Transform as xform_companies
 from mr_python.transformers.study import Transform as xform_studies
 from mr_python.transformers.interaction import Transform as xform_interactions
-from mr_python.helpers import utilities as util
+
+# Import backend modules for loading
+from mr_python.api.mr_server import Companies as company
 
 
 
@@ -56,11 +68,11 @@ def transform_studies(src_data, obj_type="Study", rewrite_dir="./"):
     return tgt
 
 
-def transform_companies(src_data, obj_type="Company", rewrite_dir="./"):
+def transform_companies(src_data, obj_type="Company", rewrite_rule_dir="./"):
     # Create company objects
     print(
         "Preparing to transform extracted data into [" + obj_type + "] objects.")
-    xformer = xform_companies(rewrite_config_dir=rewrite_dir, debug=False)
+    xformer = xform_companies(rewrite_rule_dir=rewrite_rule_dir, debug=False)
     tgt = xformer.create_objects(src_data)
     recieved = len(tgt["companies"])
     print(
@@ -144,10 +156,10 @@ def parse_cli_args(
     )
 
     parser.add_argument(
-        "--url",
+        "--s3_server",
         help="Using either IP or hostname the network address and port for the S3 compatible object store",
         type=str,
-        dest="s3_url",
+        dest="s3_server",
     )
     parser.add_argument(
         "--bucket",
@@ -186,7 +198,7 @@ def set_env(cli_args, config):
         For users the preference should be to put key and common environmental variables into
         the configuration file to reduce the need for CLI switches.
         """
-
+        print(config['s3_settings']['region'])
         # Explicitly set the essential environment variables to defaults or None
         env = {
             'rest_server': None,
@@ -195,11 +207,12 @@ def set_env(cli_args, config):
             'api_key': None,
             'server_type': None,
             's3_server': None,
-            's3_bucket': None,
+            's3_bucket': cli_args.s3_bucket,
             's3_access_key': None,
             's3_secret_key': None,
             # S3 Region is presently unchanged for Minio, for AWS, etc. this would need to change
-            's3_region': config['s3_settings']['region']
+            's3_region': config['s3_settings']['region'],
+            'rewrite_rule_dir': cli_args.rewrite_rule_dir
         }
 
         # Now set the environment up in the priority as documented above
@@ -222,11 +235,25 @@ if __name__ == "__main__":
     # Establish a print function for better visibility, parse cli args, and setup
     printer = pprint.PrettyPrinter()
     my_args = parse_cli_args()
-    my_config = util.get_config_file(my_args.conf_file)
+    [status, msg, my_config] = my_utilities.get_config_file(my_args.conf_file)
+    [status, msg, my_env] = set_env(my_args, my_config)
+
+    # Perform the authentication
+    auth_ctl = authenticate(
+        user=my_env['user'], 
+        secret=my_env['secret'], 
+        rest_server=my_env['rest_server'],
+        api_key=my_env['api_key'],
+        server_type=my_env['server_type']
+    )
+    credential = auth_ctl.login()
+
+    # Create the API controllers
+    company_api_ctl = company(credential)
 
     # Extract the data from the source
     extracted_data = extract_from_s3(
-        s3_url=my_args.s3_url, bucket_name=my_args.s3_bucket
+        s3_url=my_env['s3_server'], bucket_name=my_env['s3_bucket']
     )
 
     # Set up the basic object structure
@@ -238,20 +265,23 @@ if __name__ == "__main__":
 
     # Companies transformation
     transformed_data["companies"] = transform_companies(
-        extracted_data, rewrite_dir=my_args.rewrite_config_dir
+        extracted_data, rewrite_rule_dir=my_env['rewrite_rule_dir']
     )["companies"]
 
     # Studies transformation
     transformed_data["studies"] = transform_studies(
-        extracted_data, rewrite_dir=my_args.rewrite_config_dir
+        extracted_data, rewrite_dir=my_env['rewrite_rule_dir']
     )["studies"]
 
     # Interactions transformation
     transformed_data["interactions"] = transform_interactions(
-        extracted_data, rewrite_dir=my_args.rewrite_config_dir
+        extracted_data, rewrite_dir=my_env['rewrite_rule_dir']
     )["interactions"]
 
     # TODO Create the objects as per below
-    # Outer loop to parse through top level objects
-    #   Inner loop to parse through object instances
-    #       Load data into backend
+    for obj_type in ['companies']:
+        for obj_inst in transformed_data[obj_type]:
+            if obj_type == 'companies':
+                company_api_ctl.create_obj(obj_inst)
+
+
