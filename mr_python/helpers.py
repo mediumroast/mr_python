@@ -88,6 +88,17 @@ class utilities:
         """
         return magic.from_file(folder + '/' + item)
 
+    def get_config_file(self, filename):
+        """A safe wrapper around reading a INI inspired config file.
+        """
+        config = conf.ConfigParser()
+        try:
+            config.read(filename)
+        except conf.Error as err:
+            return False, {"status_code": "FAILED", "message": err}
+
+        return True, {"status_code": "SUCCEEDED"}, config
+
     def log_it(self, body='', function='MAIN', log_type='START'):
         """This is a very simple standin logger, ideally we will revert back to logging at some point
         """
