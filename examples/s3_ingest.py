@@ -9,10 +9,12 @@ __copyright__ = "Copyright 2022 Mediumroast, Inc. All rights reserved."
 import sys
 import pprint
 import argparse
+import pathlib
 from mr_python.extractors.s3bucket import Extract as mr_extract_s3
 from mr_python.transformers.company import Transform as xform_companies
 from mr_python.transformers.study import Transform as xform_studies
 from mr_python.transformers.interaction import Transform as xform_interactions
+from mr_python.helpers import utilities as util
 
 
 
@@ -99,10 +101,47 @@ def transform_interactions(src_data, obj_type="Interaction", rewrite_dir="./"):
 
 
 def parse_cli_args(
-    program_name="create_json_db",
-    desc="A mediumroast.io example utility that exercises ETLs to create a JSON file for usage in the Node.js json-server.",
+    program_name="s3_ingest",
+    desc='Example CLI utility extracts source data from file names (stored in an S3 bucket), transforms them into' +
+        ' Company, Study and Interaction objects, and then loads them into the mediumroast.io backend. Study, Company, ' +
+        'and Interaction object metadata can be overwritten via the relevant files stored in rewrite_rules/.',
 ):
     parser = argparse.ArgumentParser(prog=program_name, description=desc)
+
+    # Gather system oriented configuration variables from the command line
+    parser.add_argument(
+        '--conf_file',
+        help="Fully qualified filename for storing the configuration variables.",
+        type=str,
+        dest='conf_file',
+        default=str(pathlib.Path.home()) + '/.mediumroast/config.ini',
+    )
+    parser.add_argument(
+        "--mr_backend_url",
+        help="The URL of the target mediumroast.io server",
+        type=str,
+        dest="rest_server",
+    )
+    parser.add_argument(
+        "--api_key",
+        help="The API key needed to talk to the mediumroast.io server",
+        type=str,
+        dest="api_key",
+    )
+    parser.add_argument(
+        "--server_type",
+        help="The API key needed to talk to the backend",
+        type=str,
+        dest="server_type",
+        choices=['json', 'mr'],
+        default='mr'
+    )
+    parser.add_argument(
+        "--user", help="User name", type=str, dest="user"
+    )
+    parser.add_argument(
+        "--secret", help="Secret or password", type=str, dest="secret"
+    )
 
     parser.add_argument(
         "--url",
@@ -115,6 +154,7 @@ def parse_cli_args(
         help="Define the bucket for the source data",
         type=str,
         dest="s3_bucket",
+        required=True
     )
     parser.add_argument(
         "--access_key",
@@ -136,12 +176,53 @@ def parse_cli_args(
     cli_args = parser.parse_args()
     return cli_args
 
+def set_env(cli_args, config):
+        """Set up the core environment variables and return a dict with them included.
+
+        The order of priority for the arguments is:
+            1. CLI switches are the first priority and override the config file
+            2. The settings in the config file are used when no CLI switches are provided
+
+        For users the preference should be to put key and common environmental variables into
+        the configuration file to reduce the need for CLI switches.
+        """
+
+        # Explicitly set the essential environment variables to defaults or None
+        env = {
+            'rest_server': None,
+            'user': None,
+            'secret': None,
+            'api_key': None,
+            'server_type': None,
+            's3_server': None,
+            's3_bucket': None,
+            's3_access_key': None,
+            's3_secret_key': None,
+            # S3 Region is presently unchanged for Minio, for AWS, etc. this would need to change
+            's3_region': config['s3_settings']['region']
+        }
+
+        # Now set the environment up in the priority as documented above
+        env['rest_server'] = cli_args.rest_server if cli_args.rest_server else config['DEFAULT']['rest_server']
+        env['user'] = cli_args.user if cli_args.user else config['DEFAULT']['user']
+        env['secret'] = cli_args.secret if cli_args.secret else config['DEFAULT']['secret']
+        env['api_key'] = cli_args.api_key if cli_args.api_key else config['DEFAULT']['api_key']
+        env['server_type'] = cli_args.server_type if cli_args.server_type else config['DEFAULT']['server_type']
+        env['s3_server'] = cli_args.s3_server if cli_args.s3_server else config['s3_settings']['server']
+        env['s3_access_key'] = cli_args.s3_access_key if cli_args.s3_access_key else config['s3_settings']['user']
+        env['s3_secret_key'] = cli_args.s3_secret_key if cli_args.s3_secret_key else config['s3_settings']['api_key']
+
+        return True, {"status_code": "SUCCEEDED"}, env
+
 
 if __name__ == "__main__":
+    # Create the utilities object
+    my_utilities = util()
+
     # Establish a print function for better visibility, parse cli args, and setup
     printer = pprint.PrettyPrinter()
     my_args = parse_cli_args()
-
+    my_config = util.get_config_file(my_args.conf_file)
 
     # Extract the data from the source
     extracted_data = extract_from_s3(
@@ -170,3 +251,7 @@ if __name__ == "__main__":
         extracted_data, rewrite_dir=my_args.rewrite_config_dir
     )["interactions"]
 
+    # TODO Create the objects as per below
+    # Outer loop to parse through top level objects
+    #   Inner loop to parse through object instances
+    #       Load data into backend

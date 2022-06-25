@@ -1,14 +1,13 @@
+__version__ = '2.0'
+__author__ = "Michael Hay"
+__date__ = '2022-June-25'
+__copyright__ = "Copyright 2022 Mediumroast, Inc. All rights reserved."
+
+import re
 import configparser as conf
 from mr_python.helpers import interactions
 from mr_python.helpers import studies
 from mr_python.helpers import utilities
-__version__ = '1.0'
-__author__ = "Michael Hay"
-__date__ = '2021-August-31'
-__copyright__ = "Copyright 2021 mediumroast.io. All rights reserved."
-
-import sys, re
-sys.path.append('../')
 
 
 class Transform:
@@ -251,50 +250,44 @@ class Transform:
                 long_lat = self.util.locate(
                     object[self.CITY] + ',' + object[self.STATE_PROVINCE] + ',' + object[self.COUNTRY])
                 tmp_objects[object[self.RAW_COMPANY_NAME]] = {
-                    "companyName": company_obj['name'],
+                    "name": company_obj['name'],
                     "industry": company_obj['industry'],
                     "role": company_obj['role'],
                     "url": company_obj['url'],
                     "logo": company_obj['logo'],
-                    "streetAddress": company_obj['streetAddress'],
+                    "street_address": company_obj['streetAddress'],
                     "city": object[self.CITY],
-                    "stateProvince": object[self.STATE_PROVINCE],
+                    "state_province": object[self.STATE_PROVINCE],
                     "country": object[self.COUNTRY],
                     "region": object[self.REGION],
                     "phone": company_obj['phone'],
                     "description": company_obj['description'],
-                    "simpleDesc": company_obj['description'],
                     "cik": company_obj['cik'],
-                    "stockSymbol": company_obj['stockSymbol'],
-                    "Recent10kURL": company_obj['recent10kURL'],
-                    "Recent10qURL": company_obj['recent10qURL'],
-                    "zipPostal": company_obj['zipPostal'],
-                    "linkedStudies": {study_name: study_id},
-                    "linkedInteractions": {interaction_name: interaction_id},
+                    "stock_symbol": company_obj['stockSymbol'],
+                    "recent10k_url": company_obj['recent10kURL'],
+                    "recent10q_url": company_obj['recent10qURL'],
+                    "zip_postal": company_obj['zipPostal'],
+                    "linked_studies": {study_name: study_id},
+                    "linked_interactions": {interaction_name: interaction_id},
                     "longitude": long_lat[0],
                     "latitude": long_lat[1],
                     "document": self._get_document(company_obj['name']),
-                    # TODO Notes could be transformed into the opportunity or similar
-                    "notes": self.util.make_note(obj_type='Company Object: [' + company_obj['name'] + ']')
                 }
             else:
                 tmp_objects[object[self.RAW_COMPANY_NAME]
-                            ]["linkedStudies"][study_name] = study_id
+                            ]["linked_studies"][study_name] = study_id
                 tmp_objects[object[self.RAW_COMPANY_NAME]
-                            ]["linkedInteractions"][interaction_name] = interaction_id
+                            ]["linked_interactions"][interaction_name] = interaction_id
 
         for company in tmp_objects.keys():
-            if file_output:
+            # TODO we need to reconcile a local UID with the IDs that the backend supplies.
+            #       This would suggest a three step process of identifying the UIDs locally, 
+            #       getting the IDs from the backend, and then reconciling as needed.
+            # if file_output:
                 # Generally the model to create a GUID is to hash the name and the description for all objects.
                 # We will only use this option when we're outputing to a file.
-                guid = self.util.hash_it(
-                    str(company) + str(tmp_objects[company]['simpleDesc']))
-                tmp_objects[company]['GUID'] = guid
-                tmp_objects[company]['id'] = guid
-            tmp_objects[company]['totalInteractions'] = self.util.total_item(
-                tmp_objects[company]['linkedInteractions'])
-            tmp_objects[company]['totalStudies'] = self.util.total_item(
-                tmp_objects[company]['linkedStudies'])
+                # tmp_objects[company]['GUID'] = self.util.hash_it(
+                #     str(company) + str(tmp_objects[company]['description']))
             final_objects['companies'].append(tmp_objects[company])
 
         return final_objects

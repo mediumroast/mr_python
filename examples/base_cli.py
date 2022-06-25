@@ -43,17 +43,18 @@ class MrCLI:
             default=str(pathlib.Path.home()) + '/.mediumroast/config.ini',
         )
         parser.add_argument(
-            "--rest_url",
-            help="The URL of the target REST server",
+            "--mr_backend_url",
+            help="The URL of the target mediumroast.io server",
             type=str,
             dest="rest_server",
         )
         parser.add_argument(
             "--api_key",
-            help="The API key needed to talk to the backend",
+            help="The API key needed to talk to the mediumroast.io server",
             type=str,
             dest="api_key",
         )
+        # TODO this is deprecated and should be removed in a future cleanup
         parser.add_argument(
             "--server_type",
             help="The API key needed to talk to the backend",
@@ -142,6 +143,7 @@ class MrCLI:
             'user': None,
             'secret': None,
             'api_key': None,
+            # TODO this is deprecated and should be removed in a future cleanup
             'server_type': None
         }
 
@@ -150,6 +152,7 @@ class MrCLI:
         env['user'] = cli_args.user if cli_args.user else config['DEFAULT']['user']
         env['secret'] = cli_args.secret if cli_args.secret else config['DEFAULT']['secret']
         env['api_key'] = cli_args.api_key if cli_args.api_key else config['DEFAULT']['api_key']
+        # TODO this is deprecated and should be removed in a future cleanup
         env['server_type'] = cli_args.server_type if cli_args.server_type else config['DEFAULT']['server_type']
 
         return True, {"status_code": "SUCCEEDED"}, env
