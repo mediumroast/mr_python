@@ -10,6 +10,7 @@ import sys
 import pprint
 import argparse
 import pathlib
+import json
 
 # Import utilities
 from mr_python.helpers import utilities as util
@@ -269,19 +270,22 @@ if __name__ == "__main__":
     )["companies"]
 
     # Studies transformation
-    transformed_data["studies"] = transform_studies(
-        extracted_data, rewrite_dir=my_env['rewrite_rule_dir']
-    )["studies"]
+    # transformed_data["studies"] = transform_studies(
+    #     extracted_data, rewrite_dir=my_env['rewrite_rule_dir']
+    # )["studies"]
 
     # Interactions transformation
-    transformed_data["interactions"] = transform_interactions(
-        extracted_data, rewrite_dir=my_env['rewrite_rule_dir']
-    )["interactions"]
+    # transformed_data["interactions"] = transform_interactions(
+    #     extracted_data, rewrite_dir=my_env['rewrite_rule_dir']
+    # )["interactions"]
 
     # TODO Create the objects as per below
     for obj_type in ['companies']:
         for obj_inst in transformed_data[obj_type]:
+            # print(obj_inst)
             if obj_type == 'companies':
-                company_api_ctl.create_obj(obj_inst)
+                print('\n', json.dumps(obj_inst))
+                [success, msg, resp] = company_api_ctl.create_obj(obj_inst)
+                # print(msg)
 
 

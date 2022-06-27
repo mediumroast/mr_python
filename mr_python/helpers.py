@@ -377,11 +377,10 @@ class studies:
         Returns:
             string: A textual representation of the study's ID
         """
-        description = self.get_description(study_name)
-        id = 'NULL_GUID'  # This should never happen, but leaving here in case something is odd in the configuration file
-        if file_output:
-            id = self.util.hash_it(study_name + description)
-        return id
+        # description = self.get_description(study_name)
+        uid = 'NULL_GUID'  # This should never happen, but leaving here in case something is odd in the configuration file
+        uid = self.util.hash_it(study_name)
+        return uid
 
 
 class interactions:
@@ -447,11 +446,10 @@ class interactions:
             string: A textual representation of the interactions's ID
         """
         interaction_name = self.get_name(date, study_name, company_name)
-        description = self.get_description(company_name, study_name)
-        id = 'NULL_GUID'  # This should never happen, but leaving here in case something is odd in the configuration file
-        if file_output:
-            id = self.util.hash_it(interaction_name + description)
-        return id
+        # description = self.get_description(company_name, study_name)
+        uid = 'NULL_GUID'  # This should never happen, but leaving here in case something is odd in the configuration file
+        uid = self.util.hash_it(interaction_name )
+        return uid
 
     def get_substudy_id(self, interaction_name):
         """Lookup study and company substudy ids and return them.
