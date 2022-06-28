@@ -307,11 +307,7 @@ class companies:
         Returns:
             string: A textual representation of the company's ID
         """
-        description = self.get_description(company_name)
-        id = 'NULL_GUID'
-        if file_output:
-            id = self.util.hash_it(company_name + description)
-        return id
+        return self.util.hash_it(company_name)
 
 
 class studies:
@@ -377,23 +373,20 @@ class studies:
         Returns:
             string: A textual representation of the study's ID
         """
-        # description = self.get_description(study_name)
-        uid = 'NULL_GUID'  # This should never happen, but leaving here in case something is odd in the configuration file
-        uid = self.util.hash_it(study_name)
-        return uid
+        return self.util.hash_it(study_name)
 
 
 class interactions:
 
-    def __init__(self, rewrite_config_dir="../src/mediumroast/transformers/"):
+    def __init__(self, rewrite_rule_dir):
         self.RULES = {
-            'dir': rewrite_config_dir,
+            'dir': rewrite_rule_dir,
             'company': 'company.ini',
             'study': 'study.ini',
             'interaction': 'interaction.ini'
         }
         self.rules = conf.ConfigParser()
-        self.rules.read(self.RULES['dir'] + self.RULES['interaction'])
+        self.rules.read(self.RULES['dir'] + '/' + self.RULES['interaction'])
         self.util = utilities()
 
     def get_name(self, date, study_name, company_name):
@@ -424,7 +417,7 @@ class interactions:
         Returns:
             string: A generated textual description generated from the company and study names.
         """
-        description = self.rules.get('DEFAULT', 'description')
+        description = self.rules['DEFAULT']['description']
         description = description.replace("COMPANY", str(company_name))
         description = description.replace("STUDYNAME", str(study_name))
         return description
@@ -446,10 +439,7 @@ class interactions:
             string: A textual representation of the interactions's ID
         """
         interaction_name = self.get_name(date, study_name, company_name)
-        # description = self.get_description(company_name, study_name)
-        uid = 'NULL_GUID'  # This should never happen, but leaving here in case something is odd in the configuration file
-        uid = self.util.hash_it(interaction_name )
-        return uid
+        return self.util.hash_it(interaction_name )
 
     def get_substudy_id(self, interaction_name):
         """Lookup study and company substudy ids and return them.

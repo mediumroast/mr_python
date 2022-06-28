@@ -48,12 +48,11 @@ class Transform:
             'interaction': 'interaction.ini'
         }
 
-        # TODO wrap a try catch loop around the config file read
-        self.rules = conf.ConfigParser()
-        self.rules.read(self.RULES['dir'] + '/' + self.RULES['company'])
-
         # This imports the local utilies from mr_sdk for Python
         self.util = utilities()
+
+        # Get the config file
+        [success, status, self.rules] = self.util.get_config_file(self.RULES['dir'] + '/' + self.RULES['company'])
 
         # Set debug to true or false
         self.debug = debug
@@ -65,8 +64,13 @@ class Transform:
     def _transform_company(self, company_name, extended_rewrite=True):
         """Internal method to rewrite or augment key aspects of a company object as per definitions in the configuration file."""
 
+        # TODO cleanup according to interaction.py
+    
+
         # Add the items which are either rewritten or not present in the file_name metadata.
+        # (A)
         industry = self.rules['industries'][company_name] if self.rules['industries'][company_name] else self.rules['DEFAULT']['industry']
+        
         role = self.rules.get('roles', company_name) if self.rules.has_option(
             'roles', company_name) else self.rules.get('DEFAULT', 'role')
         description = self.rules.get('descriptions', company_name) if self.rules.has_option(
@@ -222,7 +226,7 @@ class Transform:
         }
 
         # Construct objects
-        interaction_xform = interactions(rewrite_config_dir=self.RULES['dir'])
+        interaction_xform = interactions(self.RULES['dir'])
         study_xform = studies(rewrite_config_dir=self.RULES['dir'])
 
         # Temp storage for objects

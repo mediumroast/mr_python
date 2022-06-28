@@ -28,6 +28,7 @@ from mr_python.transformers.interaction import Transform as xform_interactions
 
 # Import backend modules for loading
 from mr_python.api.mr_server import Companies as company
+from mr_python.api.mr_server import Interactions as interaction
 
 
 
@@ -71,6 +72,7 @@ def transform_studies(src_data, obj_type="Study", rewrite_dir="./"):
 
 def transform_companies(src_data, obj_type="Company", rewrite_rule_dir="./"):
     # Create company objects
+    sent = len(src_data)
     print(
         "Preparing to transform extracted data into [" + obj_type + "] objects.")
     xformer = xform_companies(rewrite_rule_dir=rewrite_rule_dir, debug=False)
@@ -79,7 +81,7 @@ def transform_companies(src_data, obj_type="Company", rewrite_rule_dir="./"):
     print(
         "Transformed extracted data into company objects into ["
         + str(recieved)
-        + "] ... Ok"
+        + "] total companies ... Ok"
     )
     return tgt
 
@@ -88,29 +90,17 @@ def transform_interactions(src_data, obj_type="Interaction", rewrite_dir="./"):
     # Create interaction objects
     print(
         "Preparing to transform extracted data into [" + obj_type + "] objects.")
-    xformer = xform_interactions(rewrite_config_dir=rewrite_dir, debug=False)
+    xformer = xform_interactions(rewrite_rule_dir=rewrite_dir, debug=False)
     tgt = xformer.create_objects(src_data)
-    sent = tgt["totalInteractions"]
     recieved = len(tgt["interactions"])
     print("Transformed extracted data into interaction objects ... Ok")
-    if sent == recieved:
-        print(
-            "Successful transformation, sent ["
-            + str(sent)
-            + "] and recived ["
-            + str(recieved)
-            + "] transformations matched ... Ok"
-        )
-        return tgt
-    else:
-        print(
-            "Failed transformation, sent ["
-            + str(sent)
-            + "] and recived ["
-            + str(recieved)
-            + "] transformations don't match, exiting... Failed"
-        )
-        sys.exit(-1)
+    print(
+        "Transformed extracted data into interaction objects into ["
+        + str(recieved)
+        + "] total interactions ... Ok"
+    )
+    return tgt
+
 
 
 def parse_cli_args(
@@ -251,6 +241,7 @@ if __name__ == "__main__":
 
     # Create the API controllers
     company_api_ctl = company(credential)
+    interaction_api_ctl = interaction(credential)
 
     # Extract the data from the source
     extracted_data = extract_from_s3(
@@ -275,17 +266,19 @@ if __name__ == "__main__":
     # )["studies"]
 
     # Interactions transformation
-    # transformed_data["interactions"] = transform_interactions(
-    #     extracted_data, rewrite_dir=my_env['rewrite_rule_dir']
-    # )["interactions"]
+    transformed_data["interactions"] = transform_interactions(
+        extracted_data, rewrite_dir=my_env['rewrite_rule_dir']
+    )["interactions"]
 
     # TODO Create the objects as per below
-    for obj_type in ['companies']:
+    for obj_type in ['interactions']:
         for obj_inst in transformed_data[obj_type]:
-            # print(obj_inst)
             if obj_type == 'companies':
-                print('\n', json.dumps(obj_inst))
+                # print('\n', json.dumps(obj_inst))
                 [success, msg, resp] = company_api_ctl.create_obj(obj_inst)
                 # print(msg)
+            elif obj_type == 'interactions':
+                print('\n', json.dumps(obj_inst))
+                [success, msg, resp] = interaction_api_ctl.create_obj(obj_inst)
 
 
