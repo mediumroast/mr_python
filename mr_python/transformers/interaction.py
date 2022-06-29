@@ -60,10 +60,6 @@ class Transform:
         # Set debug to true or false
         self.debug = debug
 
-        # TODO Update for this object type and put into the various helper methods.  This is wrong as of now
-        # Specify what to skip when processing sections in the conf file
-        self.to_skip = r"^description|groups|security_scope|substudies|substudy_definition|substudy_type"
-
     # TODO rewrite this to follow the load_studies utility
 
     def _transform_interaction(self, interaction_name):
@@ -131,7 +127,6 @@ class Transform:
             dict: An object containing a list of all company objects and the total number of company objects processed
         """
         final_objects = {
-            'totalInteractions': 0,
             'interactions': []
         }
 
