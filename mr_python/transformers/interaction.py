@@ -4,8 +4,7 @@ __date__ = '2022-June-27'
 __copyright__ = "Copyright 2022 Mediumroast, Inc. All rights reserved."
 
 # Perform key imports
-import random
-from datetime import datetime
+import json
 
 # Perform local imports
 from .helpers import InteractionHelpers as interactions
@@ -31,7 +30,9 @@ class Transform:
 
     This input is passed to `create_objects` which in turn generates a dict that contains a list of the interaction objects
     and associated metadata.  (Note, that at this time the metadata is still under construction and the documentation will
-    be updated when ready.)  These interaction objects can then be iterated over and ingested into the backend.
+    be updated when ready.)  These interaction objects can then be iterated over and ingested into the backend.  
+    Finally, if the 'debug' argument is set to True then this transformation class will print out every object prior to returning -- the default value of 'debug' is false.  This output is extremely useful if you're making modifications
+    to the transformation and need to debug the results with an external tool like Postman.
     """
 
     def __init__(self, rewrite_rule_dir, debug=False):
@@ -82,20 +83,8 @@ class Transform:
                 'contactTwitter': contact_twitter,
                 'contactName': contact_name,
                 'public': security_scope,
-                'local_id': xform.make_uid(interaction_name)}
+                'local_id': xform.make_uid(interaction_name)} # NOTE it is expected that this will be required for linkedX
 
-    def _get_status(self, range=4):
-        """An internal method to compute a random status to drive UX functionality.
-
-        In the backend the statuses are mapped to integers and defined as.
-
-            Completed: 0
-            Scheduled: 1
-            Canceled: 2
-            Planned: 3
-            Unknown: 4
-        """
-        return random.randrange(0, range)
 
     def create_objects(self, raw_objects):
         """Create interaction objects from a raw list of input data.
@@ -105,11 +94,15 @@ class Transform:
         is related to exercising the entire system.
 
         Args:
-            raw_objects (list): Raw objects generated from a one of the extractor methods.
+            raw_objects (list): Raw objects generated from an extractor in the expected format, see early documentation.
 
         Returns:
-            dict: An object containing a list of all company objects and other helper data.
+            dict: An object containing a list of all company objects and other helper metadata.
         """
+        
+        # This is the final dict  to return, it is expected that some amount of helper metadata
+        # will be required in the future especially for linked_studies and linked_companies.
+        # Notice that the ealier impl
         final_objects = {
             'interactions': []
         }
@@ -136,13 +129,15 @@ class Transform:
             [interaction_date, interaction_time] = self.util.correct_date(object[self.DATETIME])
 
             # Set the specific dates for the interaction
-            interaction_creation = datetime.now().isoformat()
-            year = int(interaction_date[0:4])
-            month = int(interaction_date[4:6])
-            day = int(interaction_date[6:8])
-            hour = int(interaction_time[0:2])
-            minute = int(interaction_time[2:3])
-            interaction_date_time = datetime(year, month, day, hour=hour, minute=minute).isoformat()
+            interaction_creation = self.util.get_iso_datetime()
+            my_time = {
+                'year': int(interaction_date[0:4]),
+                'month': int(interaction_date[4:6]),
+                'day': int(interaction_date[6:8]),
+                'hour': int(interaction_time[0:2]),
+                'minute': int(interaction_time[2:3])
+            }
+            interaction_date_time = self.util.get_iso_datetime(date_data=my_time)
 
             # TODO the date needs to be fixed potentially with the helper functions included
             if tmp_objects.get(interaction_name) == None:
@@ -173,7 +168,7 @@ class Transform:
                     "region": object[self.REGION],
                     "phone": interaction_obj['contactPhone'],
                     "interaction_type": 1, # TODO this should be transformed to a string
-                    "status": self._get_status(), # NOTE this is remedied as the status can range from 0 - 4
+                    "status": self.util.get_random_status(), # NOTE this is remedied as the status can range from 0 - 4
                     "abstract": interaction_obj['abstract'],
                     "thumbnail": object[self.URL] # TODO this is deprecated
                     # "state": "unsummarized", # TODO the state variable is needed should be boolean associated to abstract state
@@ -194,7 +189,7 @@ class Transform:
             #         interaction + tmp_objects[interaction]['description'])
             #     tmp_objects[interaction]['GUID'] = guid
             #     tmp_objects[interaction]['id'] = guid
-
+            if self.debug: print(json.dumps(tmp_objects[interaction]))
             final_objects['interactions'].append(tmp_objects[interaction])
 
         return final_objects

@@ -5,6 +5,7 @@ __copyright__ = "Copyright 2022 Mediumroast, Inc. All rights reserved."
 
 
 import hashlib
+import random
 import datetime
 import os
 import json
@@ -166,16 +167,17 @@ class utilities:
             my_date = my_date[0:8]
         return my_date, my_time
 
-    # TODO consider refactoring for clear separation of date and time
-
-    # def get_date_time(self):
-    #     """Get the time presently and return in two formats
-    #     """
-    #     the_time_is = time.localtime()
-    #     time_concat = the_time_is.tm_year + the_time_is.tm_mon + \
-    #         the_time_is.tm_mday + the_time_is.tm_hour + the_time_is.tm_min
-    #     time_formal = time.asctime(the_time_is)
-    #     return time_concat, time_formal
+    def get_iso_datetime(self, date_data=None):
+        """If 'date_data" is provided compute and return the time according to the data, otherwise assume now and return
+        """
+        if date_data:
+            return datetime.datetime(
+                date_data['year'], 
+                date_data['month'], date_data['day'], 
+                hour=date_data['hour'], 
+                minute=date_data['minute']).isoformat()
+        else:
+            return datetime.datetime.now().isoformat()
 
     def get_date_time(self):
         the_time = datetime.datetime.now()
@@ -226,6 +228,19 @@ class utilities:
         """
         (time_stamp, time_string) = self.get_date_time()
         return {"1": {time_stamp: "This is an example note created for the '" + obj_type + "' object on " + time_string + " by a " + creator}}
+
+    def get_random_status(self, range=4):
+        """An method to compute a random status to drive UX functionality.
+
+        In the backend the statuses are mapped to integers and defined as.
+
+            Completed: 0
+            Scheduled: 1
+            Canceled: 2
+            Planned: 3
+            Unknown: 4
+        """
+        return random.randrange(0, range)
 
 
 class companies:
