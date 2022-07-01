@@ -1,4 +1,4 @@
-__version__ = '1.0'
+__version__ = '2.0'
 __author__ = "Michael Hay"
 __date__ = '2022-June-27'
 __copyright__ = "Copyright 2022 Mediumroast, Inc. All rights reserved."
@@ -33,6 +33,20 @@ class Transform:
     be updated when ready.)  These interaction objects can then be iterated over and ingested into the backend.  
     Finally, if the 'debug' argument is set to True then this transformation class will print out every object prior to returning -- the default value of 'debug' is false.  This output is extremely useful if you're making modifications
     to the transformation and need to debug the results with an external tool like Postman.
+
+    Future work:
+
+    As of today there is no flexibility to rewrite everything or nothing from the initial extraction using rewrite rules. Therefore, the intention will be to enable this behavior in the future.  The obvious reason for enabling this pattern
+    is that the developer may already know how things should be ingested and therefore additional rewrites aren't required.
+    That should handle the case of "perfect knowledge" for the ingestion and transformation process. In the other instance
+    there could be more information from the file system metadata that is correct not requiring rewrites. Additional thinking
+    is needed to figure out a more general solution to both problems.  So as of now we're just enabling base rewrites 
+    without consideration for these two use cases.
+
+    Other than rewrites, there will be a requirement to implement 'linked_studies" and 'linked_companies' attributes for
+    the interaction objects.  This depends on the backend implementation and may be more complex that the initial 
+    implementation with the 'json_server'.  There are some breadcrumbs and notes in the comments for this linking process
+    within the transformation code.
     """
 
     def __init__(self, rewrite_rule_dir, debug=False):
@@ -52,6 +66,9 @@ class Transform:
 
         # Set debug to true or false
         self.debug = debug
+
+        # Set the rewrite behavior
+        self.rewrite_policy = 'standard' # Potential states: none, standard, extended, all we may want to implement 1 or 2 only
 
     def _transform_interaction(self, interaction_name, xform):
         """Internal method to rewrite or augment key aspects of an interaction object as per definitions in the configuration file."""
@@ -180,16 +197,12 @@ class Transform:
             #     tmp_objects[interaction_name]["linkedStudies"][study_name] = study_id
             #     tmp_objects[interaction_name]["linkedCompanies"][company_name] = company_id
 
-        # TODO Look at the company.py obj and fix accordingly 
         for interaction in tmp_objects.keys():
-            # if file_output:
-            #     # Generally the model to create a GUID is to hash the name and the description for all objects.
-            #     # We will only use this option when we're outputing to a file.
-            #     guid = self.util.hash_it(
-            #         interaction + tmp_objects[interaction]['description'])
-            #     tmp_objects[interaction]['GUID'] = guid
-            #     tmp_objects[interaction]['id'] = guid
+
+            # In case we're debugging print out each object
             if self.debug: print(json.dumps(tmp_objects[interaction]))
+
+            # Add the object to the final set dict
             final_objects['interactions'].append(tmp_objects[interaction])
 
         return final_objects
