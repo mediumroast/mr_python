@@ -98,6 +98,10 @@ class InteractionHelpers(BaseHelpers):
     def __init__(self, rewrite_rule_dir, obj_type='interaction'):
         super().__init__(rewrite_rule_dir, obj_type)
 
+        # NOTE This is the template description which also shows up in the 'interaction.ini'
+        #       rule file.  You will need to update in both places if you plan to customize.
+        self.desc_template = 'Learn from COMPANY, either in person or digitally, key points and inputs related to the study STUDYNAME'
+
     def get_name(self, date, study_name, company_name):
         """Construct an object name using key system metadata including study and company names, plus a date.
 
@@ -120,19 +124,60 @@ class InteractionHelpers(BaseHelpers):
         return str(date) + '-' + str(study_name) + '-' + str(company_name)
 
     def get_description(self, study_name, company_name, name=None):
-        """Create a description from the interaction.
+        """Create a description for the interaction.
 
-        Using a default in the configuration file merge in company and study names to generate a description for 
-        the interaction.
+        Using a default in the rule file merge in company and study names to generate a description for the interaction. Currently the default description template in the rule file is:
+
+        'Learn from COMPANY, either in person or digitally, key points and inputs related to the study STUDYNAME' 
+
+        The implementation then replaces 'COMPANY' and 'STUDYNAME' with the inputs to this method.
+        While it is possible to change the template it is highly discouraged.  If you were to do it
+        you'd need to update the used 'interaction.ini' file, and this module accordingly.  Comments
+        in the code point to where potential changes are needed. A better approach would be to make
+        use of a specific description for the relevant interactions that need to be updated.
 
         Args:
             company_name (str): The company name which aligns to the name within the configuration file.
             study_name (str): The study name which aligns to the name within the configuration file.
+            name (str): An optional name to lookup a description for, defaults to None
 
         Returns:
-            string: A generated textual description generated from the company and study names.
+            my_description (str): A generated textual description generated from the company and study names.
         """
-        # Get the generic description
-        blank_description = super().get_description(name)
-        description = blank_description.replace("COMPANY", str(company_name))
-        return description.replace("STUDYNAME", str(study_name))
+
+        my_description = self.get_description(name)
+        if my_description == self.desc_template:
+            # NOTE these are the replacement rules to update the interaction description.
+            #       If you choose to create your own implementation these two replacements
+            #       will need to be updated to match your approach.
+            my_description = my_description.replace("COMPANY", str(company_name))
+            return my_description.replace("STUDYNAME", str(study_name))
+        else:
+            return my_description
+
+    def get_substudy_id(self, interaction_name):
+        """Lookup substudy ids and return them.
+
+        If there are rewrite rules available for the interaction name mapping it to a substudy Id for
+        the associated study return it else return the default substudy Id.  Substudy Ids are needed to construct
+        subcorpuses for study objects to build proper topics.
+
+        Args:
+            interaction_name (str): The name of the interaction
+
+        Returns:
+            substudy_id (str): A textual representation of numeric Id for the substudy
+            
+        """
+
+        substudy_id = self.get_from_section(interaction_name, 'substudy_mappings', 'substudy')
+
+        return substudy_id
+
+class StudyHelpers(BaseHelpers):
+    def __init__(self, rewrite_rule_dir, obj_type='study'):
+        super().__init__(rewrite_rule_dir, obj_type)
+
+class CompanyHelpers(BaseHelpers):
+    def __init__(self, rewrite_rule_dir, obj_type='company'):
+        super().__init__(rewrite_rule_dir, obj_type)

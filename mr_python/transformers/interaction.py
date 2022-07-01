@@ -4,36 +4,37 @@ __date__ = '2022-June-27'
 __copyright__ = "Copyright 2022 Mediumroast, Inc. All rights reserved."
 
 # Perform key imports
-import configparser as conf
 import random
 from datetime import datetime
 
 # Perform local imports
-from mr_python.helpers import studies
-from mr_python.helpers import interactions
-from mr_python.helpers import companies
+from .helpers import InteractionHelpers as interactions
+from .helpers import CompanyHelpers as companies
+from .helpers import StudyHelpers as studies
 from mr_python.helpers import utilities
 
-
 class Transform:
-    """Perform transformation of input data into a proper company object.
+    """Perform the core transformation of input data into a proper interaction object.
 
-    Returns:
-        list: A list of dicts which can be pass along to additional 
+    Using the transformation rules written into the rules files specified in 'rewrite_rule_dir'
+    create more complete interaction objects which can then be ingested into the backend. This
+    kind of transformation can be used from any input like files, file systems and S3 compatible
+    object stores where the source data can be massaged into a the following array of arrays.
 
-    Methods:
-        get_description()
-            Lookup a company description from the configuration file and return it.
+    '
+        [
+            [RAW_DATE, REGION, COUNTRY, STATE_PROVINCE, CITY, INDUSTRY, RAW_STUDY_NAME, RAW_COMPANY_NAME, INTERACTION_TYPE, URL],
+            ...
+            [RAW_DATE, REGION, COUNTRY, STATE_PROVINCE, CITY, INDUSTRY, RAW_STUDY_NAME, RAW_COMPANY_NAME, INTERACTION_TYPE, URL]
+        ]
+    '
 
-        get_industry()
-            Lookup a company industry from the configuration file and return it.
-
-        create_objects()
-            Using the attributes set when the object was constructed get the data from the file.
+    This input is passed to `create_objects` which in turn generates a dict that contains a list of the interaction objects
+    and associated metadata.  (Note, that at this time the metadata is still under construction and the documentation will
+    be updated when ready.)  These interaction objects can then be iterated over and ingested into the backend.
     """
 
     def __init__(self, rewrite_rule_dir, debug=False):
-        # TODO consume the additional defaults for URL, etc.
         self.RAW_COMPANY_NAME = 7
         self.RAW_STUDY_NAME = 6
         self.RAW_DATE = 0
@@ -42,55 +43,31 @@ class Transform:
         self.STATE_PROVINCE = 3
         self.CITY = 4
         self.URL = 9
-        self.THUMBNAIL = 10
         self.DATETIME = 0
-        self.RULES = {
-            'dir': rewrite_rule_dir,
-            'company': 'company.ini',
-            'study': 'study.ini',
-            'interaction': 'interaction.ini'
-        }
+        self.RULE_DIR = rewrite_rule_dir
 
         # This imports the local utilies from mr_sdk for Python
         self.util = utilities()
 
-        # Get the config file
-        [success, status, self.rules] = self.util.get_config_file(self.RULES['dir'] + '/' + self.RULES['interaction'])
-
         # Set debug to true or false
         self.debug = debug
 
-    # TODO rewrite this to follow the load_studies utility
-
-    def _transform_interaction(self, interaction_name):
+    def _transform_interaction(self, interaction_name, xform):
         """Internal method to rewrite or augment key aspects of an interaction object as per definitions in the configuration file."""
 
-
         # Add the items which are either rewritten or not present in the file_name metadata.
-        groups = self.rules['groups'][interaction_name] if interaction_name in self.rules['groups'] else self.rules['DEFAULT']['groups']
-
-        abstract = self.rules['abstracts'][interaction_name] if interaction_name in self.rules['abstracts'] else self.rules['DEFAULT']['abstract']
-
-        status = self.rules['statuses'][interaction_name] if interaction_name in self.rules['statuses'] else self.rules['DEFAULT']['status']
-
-        interaction_type = self.rules['types'][interaction_name] if interaction_name in self.rules['types'] else self.rules['DEFAULT']['type']
-
-        contact_address = self.rules['contact_addresses'][interaction_name] if interaction_name in self.rules['contact_addresses'] else self.rules['DEFAULT']['contact_address']
-
-        contact_zipPostal = self.rules['contact_zipPostals'][interaction_name] if interaction_name in self.rules['contact_zipPostals'] else self.rules['DEFAULT']['contact_zipPostal']
-
-        contact_phone = self.rules['contact_phones'][interaction_name] if interaction_name in self.rules['contact_phones'] else self.rules['DEFAULT']['contact_phone']
-
-        contact_linkedin = self.rules['contact_linkedins'][interaction_name] if interaction_name in self.rules['contact_linkedins'] else self.rules['DEFAULT']['contact_linkedin']
-
-        contact_email = self.rules['contact_emails'][interaction_name] if interaction_name in self.rules['contact_emails'] else self.rules['DEFAULT']['contact_email']
-
-        contact_twitter = self.rules['contact_twitters'][interaction_name] if interaction_name in self.rules['contact_twitters'] else self.rules['DEFAULT']['contact_twitter']
-
-        contact_name = self.rules['contact_names'][interaction_name] if interaction_name in self.rules['contact_names']else self.rules['DEFAULT']['contact_name']
-
-        security_scope = self.rules['security_scopes'][interaction_name] if interaction_name in self.rules['security_scopes'] else self.rules['DEFAULT']['security_scope']
-            
+        groups = xform.get_from_section(interaction_name, 'groups', 'groups')
+        abstract = xform.get_from_section(interaction_name, 'abstracts', 'abstract')
+        status = xform.get_from_section(interaction_name, 'statuses', 'status')
+        interaction_type = xform.get_from_section(interaction_name, 'types', 'type')
+        contact_address = xform.get_from_section(interaction_name, 'contact_addresses', 'contact_address')
+        contact_zip_postal = xform.get_from_section(interaction_name, 'contact_zip_postals', 'contact_zip_postal')
+        contact_phone = xform.get_from_section(interaction_name, 'contact_phones', 'contact_phone')
+        contact_linkedin = xform.get_from_section(interaction_name, 'contact_linkedins', 'contact_linkedin')
+        contact_email  = xform.get_from_section(interaction_name, 'contact_emails', 'contact_email')
+        contact_twitter = xform.get_from_section(interaction_name, 'contact_twitters', 'contact_twitter')
+        contact_name = xform.get_from_section(interaction_name, 'contact_names', 'contact_name')
+        security_scope = xform.get_from_section(interaction_name, 'security_scopes', 'security_scope')          
         security_scope = True if security_scope == 'True' else False
 
         return {'groups': groups,
@@ -98,23 +75,30 @@ class Transform:
                 'status': status,
                 'interactionType': interaction_type,
                 'contactAddress': contact_address,
-                'contactZipPostal': contact_zipPostal,
+                'contactZipPostal': contact_zip_postal,
                 'contactPhone': contact_phone,
                 'contactLinkedIn': contact_linkedin,
                 'contactEmail': contact_email,
                 'contactTwitter': contact_twitter,
                 'contactName': contact_name,
-                'public': security_scope}
+                'public': security_scope,
+                'local_id': xform.make_uid(interaction_name)}
 
     def _get_status(self, range=4):
-        """An internal method to compute a random status to drive UX functionality
-        """
-        idx = random.randrange(0, range)
-        statuses = ['Completed', 'Scheduled', 'Canceled', 'Planned', 'Unknown']
-        return idx
+        """An internal method to compute a random status to drive UX functionality.
 
-    def create_objects(self, raw_objects, file_output=True):
-        """Create study objects from a raw list of input data.
+        In the backend the statuses are mapped to integers and defined as.
+
+            Completed: 0
+            Scheduled: 1
+            Canceled: 2
+            Planned: 3
+            Unknown: 4
+        """
+        return random.randrange(0, range)
+
+    def create_objects(self, raw_objects):
+        """Create interaction objects from a raw list of input data.
 
         As this is the main transformation function of the class enabling a properly formatted set of objects that can
         either be passed to a file or the backend.  The former is more for advancing the GUI, etc. while the latter
@@ -124,7 +108,7 @@ class Transform:
             raw_objects (list): Raw objects generated from a one of the extractor methods.
 
         Returns:
-            dict: An object containing a list of all company objects and the total number of company objects processed
+            dict: An object containing a list of all company objects and other helper data.
         """
         final_objects = {
             'interactions': []
@@ -136,23 +120,20 @@ class Transform:
         for object in raw_objects:
 
             # Capture the right study_name and then fetch the study's ID
-            study_xform = studies(rewrite_config_dir=self.RULES['dir'])
+            study_xform = studies(rewrite_config_dir=self.RULE_DIR)
             study_name = study_xform.get_name(object[self.RAW_STUDY_NAME])
-            study_id = study_xform.make_id(study_name)
+            study_id = study_xform.make_uid(study_name)
 
             # Capture the right company_name and then fetch the study's ID
-            company_xform = companies(rewrite_config_dir=self.RULES['dir'])
-            company_name = company_xform.get_name(
-                object[self.RAW_COMPANY_NAME])
-            company_id = company_xform.make_id(company_name)
+            company_xform = companies(rewrite_rule_dir=self.RULE_DIR)
+            company_name = company_xform.get_name(object[self.RAW_COMPANY_NAME])
+            company_id = company_xform.make_uid(company_name)
 
             # Perform basic transformation of company data based upon data in the configuration file
-            interaction_xform = interactions(self.RULES['dir'])
-            interaction_name = interaction_xform.get_name(
-                object[self.RAW_DATE], study_name, company_name)
-            interaction_obj = self._transform_interaction(interaction_name)
-            interaction_date, interaction_time = self.util.correct_date(
-                object[self.DATETIME])
+            interaction_xform = interactions(self.RULE_DIR)
+            interaction_name = interaction_xform.get_name(object[self.RAW_DATE], study_name, company_name)
+            interaction_obj = self._transform_interaction(interaction_name, interaction_xform)
+            [interaction_date, interaction_time] = self.util.correct_date(object[self.DATETIME])
 
             # Set the specific dates for the interaction
             interaction_creation = datetime.now().isoformat()
@@ -164,7 +145,6 @@ class Transform:
             interaction_date_time = datetime(year, month, day, hour=hour, minute=minute).isoformat()
 
             # TODO the date needs to be fixed potentially with the helper functions included
-            # TODO this is only partially implemented and needs to be looked at again
             if tmp_objects.get(interaction_name) == None:
                 long_lat = self.util.locate(
                     object[self.CITY] + ',' + object[self.STATE_PROVINCE] + ',' + object[self.COUNTRY])
@@ -195,7 +175,7 @@ class Transform:
                     "interaction_type": 1, # TODO this should be transformed to a string
                     "status": self._get_status(), # NOTE this is remedied as the status can range from 0 - 4
                     "abstract": interaction_obj['abstract'],
-                    "thumbnail": object[self.THUMBNAIL] # TODO this is deprecated
+                    "thumbnail": object[self.URL] # TODO this is deprecated
                     # "state": "unsummarized", # TODO the state variable is needed should be boolean associated to abstract state
                     # "linkedStudies": {study_name: study_id}, # TODO verify implementation
                     # "linkedCompanies": {company_name: company_id}, # TODO verify implementation    
