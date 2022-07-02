@@ -49,7 +49,7 @@ class Transform:
     within the transformation code.
     """
 
-    def __init__(self, rewrite_rule_dir, debug=False):
+    def __init__(self, rewrite_rule_dir, policy='standard', debug=False):
         self.RAW_COMPANY_NAME = 7
         self.RAW_STUDY_NAME = 6
         self.RAW_DATE = 0
@@ -68,7 +68,7 @@ class Transform:
         self.debug = debug
 
         # Set the rewrite behavior
-        self.rewrite_policy = 'standard' # Potential states: none, standard, extended, all we may want to implement 1 or 2 only
+        self.rewrite_policy = policy # Potential states: none, standard, extended, all we may want to implement 1 or 2 only
 
     def _transform_interaction(self, interaction_name, xform):
         """Internal method to rewrite or augment key aspects of an interaction object as per definitions in the configuration file."""
@@ -130,12 +130,12 @@ class Transform:
         for object in raw_objects:
 
             # Capture the right study_name and then fetch the study's ID
-            study_xform = studies(rewrite_config_dir=self.RULE_DIR)
+            study_xform = studies(self.RULE_DIR)
             study_name = study_xform.get_name(object[self.RAW_STUDY_NAME])
             study_id = study_xform.make_uid(study_name)
 
             # Capture the right company_name and then fetch the study's ID
-            company_xform = companies(rewrite_rule_dir=self.RULE_DIR)
+            company_xform = companies(self.RULE_DIR)
             company_name = company_xform.get_name(object[self.RAW_COMPANY_NAME])
             company_id = company_xform.make_uid(company_name)
 
@@ -144,6 +144,7 @@ class Transform:
             interaction_name = interaction_xform.get_name(object[self.RAW_DATE], study_name, company_name)
             interaction_obj = self._transform_interaction(interaction_name, interaction_xform)
             [interaction_date, interaction_time] = self.util.correct_date(object[self.DATETIME])
+            interaction_id = interaction_xform.make_uid(interaction_name)
 
             # Set the specific dates for the interaction
             interaction_creation = self.util.get_iso_datetime()
@@ -164,7 +165,7 @@ class Transform:
                     "creator_id":1, # TODO it is a bug if this is required
                     "owner_id": 1, # TODO it is a bug if this is required
                     "name": interaction_name,
-                    "description": interaction_xform.get_description(company_name, study_name),
+                    "description": interaction_xform.get_description(study_name, company_name),
                     "creation_date": interaction_creation,
                     "modification_date": interaction_creation,
                     "date_time": interaction_date_time,

@@ -9,7 +9,7 @@ sys.path.append('../')
 
 from mr_python.helpers import utilities
 from mr_python.helpers import companies
-from mr_python.helpers import interactions
+from .helpers import InteractionHelpers as interactions
 import configparser as conf
 
 class Transform:
@@ -337,7 +337,7 @@ class Transform:
         }
 
         # Construct objects
-        interaction_xform=interactions(rewrite_config_dir=self.RULES['dir'])  
+        interaction_xform=interactions(self.RULES['dir'])  
         company_xform=companies(rewrite_config_dir=self.RULES['dir'])
 
         # Temp storage for objects
@@ -354,7 +354,7 @@ class Transform:
             
             # Capture the right study_name and then fetch the study's ID
             interaction_name=interaction_xform.get_name(object[self.RAW_DATE], study_obj['name'], company_name)
-            interaction_id=interaction_xform.make_id(object[self.RAW_DATE], company_name, study_obj['name'])
+            interaction_id=interaction_xform.make_uid(interaction_name)
 
             if tmp_objects.get (object[self.RAW_STUDY_NAME]) == None:
                 tmp_objects[object[self.RAW_STUDY_NAME]] = {

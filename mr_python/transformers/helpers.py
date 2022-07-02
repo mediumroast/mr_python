@@ -5,6 +5,7 @@ __copyright__ = "Copyright 2022 Mediumroast, Inc. All rights reserved."
 
 # Perform key imports
 import configparser as conf
+import re
 
 # Perform local imports
 from ..helpers import utilities as util
@@ -57,20 +58,20 @@ class BaseHelpers:
         """
 
         # Set to the rewritten name if it exists otherwise set to the original raw_name
-        obj_name = self.rewrite_rules['names'][raw_name] if raw_name in self.rewrite_rules['names'] else raw_name
+        obj_name = self.rewrite_rules['names'][raw_name] if self.rewrite_rules.has_option('names', raw_name) else raw_name
 
         return obj_name
 
-    def get_description(self, raw_name):
-        """Using the 'raw_name' of the object return a unique description, if it exists, otherwise return the default.
+    def get_description(self, name):
+        """Using the 'name' of the object return a unique description, if it exists, otherwise return the default.
 
-        In a rewrite rules file there is a [descriptions] section with 'raw_name=description' set.
-        This method will take in 'raw_name' and return 'description'.  If there is no
-        match for 'raw_name' in the section then the description from the [DEFAULT] section will be returned. 
+        In a rewrite rules file there is a [descriptions] section with 'name=description' set.
+        This method will take in 'name' and return 'description'.  If there is no
+        match for 'name' in the section then the description from the [DEFAULT] section will be returned. 
         """
 
         # Return the rewritten description if it exists otherwise return the DEFAULT description
-        return self.get_from_section(raw_name, 'descriptions', 'description')
+        return self.get_from_section(name, 'descriptions', 'description')
 
     def get_groups(self, raw_name):
         """Using the 'raw_name' of the object return the associated groups, if it exists, otherwise return the default.
@@ -90,7 +91,7 @@ class BaseHelpers:
         rewrite rules.  As needed it can also be directly used.
         """
 
-        obj_value = self.rewrite_rules[section][name] if name in self.rewrite_rules[section] else self.rewrite_rules[default_section][default_name]
+        obj_value = self.rewrite_rules[section][name] if self.rewrite_rules.has_option(section, name) else self.rewrite_rules[default_section][default_name]
 
         return obj_value
 
@@ -123,7 +124,7 @@ class InteractionHelpers(BaseHelpers):
         # Return the system generated name from key system metadata
         return str(date) + '-' + str(study_name) + '-' + str(company_name)
 
-    def get_description(self, study_name, company_name, name=None):
+    def get_description(self, study_name, company_name, name='NULL'):
         """Create a description for the interaction.
 
         Using a default in the rule file merge in company and study names to generate a description for the interaction. Currently the default description template in the rule file is:
@@ -145,7 +146,7 @@ class InteractionHelpers(BaseHelpers):
             my_description (str): A generated textual description generated from the company and study names.
         """
 
-        my_description = self.get_description(name)
+        my_description = super().get_description(name)
         if my_description == self.desc_template:
             # NOTE these are the replacement rules to update the interaction description.
             #       If you choose to create your own implementation these two replacements
@@ -170,7 +171,7 @@ class InteractionHelpers(BaseHelpers):
             
         """
 
-        substudy_id = self.get_from_section(interaction_name, 'substudy_mappings', 'substudy')
+        substudy_id = super().get_from_section(interaction_name, 'substudy_mappings', 'substudy')
 
         return substudy_id
 
@@ -181,3 +182,67 @@ class StudyHelpers(BaseHelpers):
 class CompanyHelpers(BaseHelpers):
     def __init__(self, rewrite_rule_dir, obj_type='company'):
         super().__init__(rewrite_rule_dir, obj_type)
+
+        self.DEFAULT_DOC = 'DEFAULT_PRFAQ'
+
+    # TODO look at study helpers to see if this should be a generic utility
+    def _reformat_name(self, company_name, separator='_'):
+        """Internal method to reformat the company name by replacing spaces with the separator."""
+        return company_name.replace(' ', separator)
+
+    def _replace_company(self, text, company_name):
+        text = text.strip()
+        text = text.replace('\n', ' ')
+        text = text.replace('$COMPANY$', company_name)
+        return text
+
+    # Transform either default or study specific document elements into the proper data structure
+    def _document_helper(self, section, seperator='_'):
+        intro = 'Introduction'
+        prps = 'Purpose'
+        acts = 'Action'
+        document = {
+            intro: '',
+            prps: {},
+            acts: {}
+        }
+        introduction = re.compile('^Introduction', re.IGNORECASE)
+        purpose = re.compile('^Purpose', re.IGNORECASE)
+        actions = re.compile('^Action_', re.IGNORECASE)
+        for idx in list(self.rewrite_rules[section]):
+            if introduction.match(idx):
+                document[intro] = self.rewrite_rules[section][idx]
+            elif purpose.match(idx):
+                document[prps] = self.rewrite_rules[section][idx]
+            elif actions.match(idx):
+                item_type = idx.split(seperator)[1]
+                if item_type == 'Text':
+                    document['Action']['text'] = self.rewrite_rules[section][idx]
+                else:
+                    document['Action'][item_type] = self.rewrite_rules[section][idx]
+        return document
+
+    def get_document(self, company_name):
+        """Pull the document from the rules if it exists.
+        """
+
+        # Create the section for the company doc
+        my_section = self._reformat_name(company_name) + '_PRFAQ'
+
+        # Check to see if the section exists otherwise revert to the default
+        my_document = self._document_helper(my_section) if self.rewrite_rules.has_section(
+            my_section) else self._document_helper(self.DEFAULT_DOC)
+
+        # Format the document
+        for doc_section in my_document.keys():
+            my_text = my_document[doc_section]
+            if type(my_text) is dict:
+                for entry in my_text:
+                    local_text = my_text[entry]
+                    local_text = self._replace_company(local_text, company_name)
+                    my_text[entry] = local_text
+            else:
+                my_text = self._replace_company(my_text, company_name)
+            
+            my_document[doc_section] = my_text
+        return my_document

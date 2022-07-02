@@ -6,11 +6,12 @@ __date__ = "2022-June-25"
 __copyright__ = "Copyright 2022 Mediumroast, Inc. All rights reserved."
 
 # Import system libraries
-import sys
 import pprint
 import argparse
 import pathlib
-import json
+from xml.dom.pulldom import END_DOCUMENT
+from xmlrpc.client import boolean
+import pyfiglet
 
 # Import utilities
 from mr_python.helpers import utilities as util
@@ -35,7 +36,7 @@ from mr_python.api.mr_server import Interactions as interaction
 def extract_from_s3(s3_url, bucket_name="interactions"):
     # Capture the source data from the file specified in file_name
     print(
-        "\nPreparing to extract data from source bucket [" + bucket_name + "]... Ok")
+        "\nExtracting data from source bucket [" + bucket_name + "].")
     src_obj = mr_extract_s3(bucket=bucket_name, url=s3_url)
     src_data = src_obj.get_data()
     no_items = len(src_data)
@@ -44,8 +45,9 @@ def extract_from_s3(s3_url, bucket_name="interactions"):
         + str(no_items)
         + "] total items from source bucket ["
         + bucket_name
-        + "]... OK"
+        + "]."
     )
+    print('-'*80, "\n")
     return src_data
 
 
@@ -74,31 +76,28 @@ def transform_companies(src_data, obj_type="Company", rewrite_rule_dir="./"):
     # Create company objects
     sent = len(src_data)
     print(
-        "Preparing to transform extracted data into [" + obj_type + "] objects.")
-    xformer = xform_companies(rewrite_rule_dir=rewrite_rule_dir, debug=False)
+        "Transforming raw data into [" + obj_type + "] objects.")
+    xformer = xform_companies(rewrite_rule_dir, debug=False)
     tgt = xformer.create_objects(src_data)
     recieved = len(tgt["companies"])
     print(
-        "Transformed extracted data into company objects into ["
-        + str(recieved)
-        + "] total companies ... Ok"
+        "Transformed [" + str(recieved) + "] companies."
     )
+    print('-'*80, "\n")
     return tgt
 
 
-def transform_interactions(src_data, obj_type="Interaction", rewrite_dir="./"):
+def transform_interactions(src_data, obj_type="Interaction", rewrite_rule_dir="./"):
     # Create interaction objects
     print(
-        "Preparing to transform extracted data into [" + obj_type + "] objects.")
-    xformer = xform_interactions(rewrite_rule_dir=rewrite_dir, debug=False)
+        "Transforming raw data into [" + obj_type + "] objects.")
+    xformer = xform_interactions(rewrite_rule_dir)
     tgt = xformer.create_objects(src_data)
     recieved = len(tgt["interactions"])
-    print("Transformed extracted data into interaction objects ... Ok")
     print(
-        "Transformed extracted data into interaction objects into ["
-        + str(recieved)
-        + "] total interactions ... Ok"
+        "Transformed [" + str(recieved) + "] interactions."
     )
+    print('-'*80, "\n")
     return tgt
 
 
@@ -107,11 +106,18 @@ def parse_cli_args(
     program_name="s3_ingest",
     desc='Example CLI utility extracts source data from file names (stored in an S3 bucket), transforms them into' +
         ' Company, Study and Interaction objects, and then loads them into the mediumroast.io backend. Study, Company, ' +
-        'and Interaction object metadata can be overwritten via the relevant files stored in rewrite_rules/.',
+        'and Interaction object metadata can be overwritten via the relevant files stored in "rewrite_rules/".',
 ):
     parser = argparse.ArgumentParser(prog=program_name, description=desc)
 
     # Gather system oriented configuration variables from the command line
+    parser.add_argument(
+        '--no_intro',
+        help="Suppress the introductory text and get right to business.",
+        dest='no_intro',
+        action='store_false',
+        default=False
+    )
     parser.add_argument(
         '--conf_file',
         help="Fully qualified filename for storing the configuration variables.",
@@ -189,7 +195,6 @@ def set_env(cli_args, config):
         For users the preference should be to put key and common environmental variables into
         the configuration file to reduce the need for CLI switches.
         """
-        print(config['s3_settings']['region'])
         # Explicitly set the essential environment variables to defaults or None
         env = {
             'rest_server': None,
@@ -220,6 +225,7 @@ def set_env(cli_args, config):
 
 
 if __name__ == "__main__":
+
     # Create the utilities object
     my_utilities = util()
 
@@ -228,6 +234,11 @@ if __name__ == "__main__":
     my_args = parse_cli_args()
     [status, msg, my_config] = my_utilities.get_config_file(my_args.conf_file)
     [status, msg, my_env] = set_env(my_args, my_config)
+
+     # Print intro unless suppressed
+    if not my_args.no_intro:
+        intro = pyfiglet.figlet_format('Mediumroast S3 Ingest utility.')
+        print(intro, "\n", '-'*80, "\n")
 
     # Perform the authentication
     auth_ctl = authenticate(
@@ -267,18 +278,21 @@ if __name__ == "__main__":
 
     # Interactions transformation
     transformed_data["interactions"] = transform_interactions(
-        extracted_data, rewrite_dir=my_env['rewrite_rule_dir']
+        extracted_data, rewrite_rule_dir=my_env['rewrite_rule_dir']
     )["interactions"]
 
     # TODO Create the objects as per below
-    for obj_type in ['interactions']:
+    for obj_type in ['interactions', 'companies']:
+        print("Ingesting transformed [" + obj_type + "] into the backend.")
         for obj_inst in transformed_data[obj_type]:
             if obj_type == 'companies':
-                # print('\n', json.dumps(obj_inst))
                 [success, msg, resp] = company_api_ctl.create_obj(obj_inst)
-                # print(msg)
+                if success: print('o', end='')
+                else: print('x', end='')
             elif obj_type == 'interactions':
-                print('\n', json.dumps(obj_inst))
                 [success, msg, resp] = interaction_api_ctl.create_obj(obj_inst)
+                if success: print('o', end='')
+                else: print('x', end='')
+        print('\n')
 
 
