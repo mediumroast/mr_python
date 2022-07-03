@@ -242,6 +242,10 @@ class utilities:
         """
         return random.randrange(0, range)
 
+    def reformat_name(self, obj_name, separator='_'):
+        """Internal method to reformat the an object name by replacing spaces with the separator."""
+        return obj_name.replace(' ', separator)
+
 
 class companies:
 

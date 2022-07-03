@@ -30,7 +30,7 @@ from mr_python.transformers.interaction import Transform as xform_interactions
 # Import backend modules for loading
 from mr_python.api.mr_server import Companies as company
 from mr_python.api.mr_server import Interactions as interaction
-
+from mr_python.api.mr_server import Studies as study
 
 
 def extract_from_s3(s3_url, bucket_name="interactions"):
@@ -41,7 +41,7 @@ def extract_from_s3(s3_url, bucket_name="interactions"):
     src_data = src_obj.get_data()
     no_items = len(src_data)
     print(
-        "Extracted ["
+        "\t-> Extracted ["
         + str(no_items)
         + "] total items from source bucket ["
         + bucket_name
@@ -51,51 +51,48 @@ def extract_from_s3(s3_url, bucket_name="interactions"):
     return src_data
 
 
-# TODO Transform the output into a string and hash it, we can then compare the hash across runs to verify correctness <-- Useful for testing
 
 # TODO Create some README.md files to cover key thoughts around testing for the system
 #   Starts with system setup of minio, running sample test scripts to ETL data, etc.
 
 
-def transform_studies(src_data, obj_type="Study", rewrite_dir="./"):
+def transform_studies(src_data, obj_type="Study", rewrite_rule_dir="./", debug=False):
     # Create study objects
     print(
-        "Preparing to transform extracted data into [" + obj_type + "] objects.")
-    xformer = xform_studies(rewrite_config_dir=rewrite_dir, debug=False)
+        "Transforming raw data into [" + obj_type + "] objects.")
+    xformer = xform_studies(rewrite_rule_dir, debug=debug)
     tgt = xformer.create_objects(src_data)
     recieved = len(tgt["studies"])
     print(
-        "Transformed extracted data into study objects into ["
-        + str(recieved)
-        + "] ... Ok"
-    )
-    return tgt
-
-
-def transform_companies(src_data, obj_type="Company", rewrite_rule_dir="./"):
-    # Create company objects
-    sent = len(src_data)
-    print(
-        "Transforming raw data into [" + obj_type + "] objects.")
-    xformer = xform_companies(rewrite_rule_dir, debug=False)
-    tgt = xformer.create_objects(src_data)
-    recieved = len(tgt["companies"])
-    print(
-        "Transformed [" + str(recieved) + "] companies."
+        "\t-> Transformed [" + str(recieved) + "] studies."
     )
     print('-'*80, "\n")
     return tgt
 
 
-def transform_interactions(src_data, obj_type="Interaction", rewrite_rule_dir="./"):
+def transform_companies(src_data, obj_type="Company", rewrite_rule_dir="./", debug=False):
+    # Create company objects
+    print(
+        "Transforming raw data into [" + obj_type + "] objects.")
+    xformer = xform_companies(rewrite_rule_dir, debug=debug)
+    tgt = xformer.create_objects(src_data)
+    recieved = len(tgt["companies"])
+    print(
+        "\t-> Transformed [" + str(recieved) + "] companies."
+    )
+    print('-'*80, "\n")
+    return tgt
+
+
+def transform_interactions(src_data, obj_type="Interaction", rewrite_rule_dir="./", debug=False):
     # Create interaction objects
     print(
         "Transforming raw data into [" + obj_type + "] objects.")
-    xformer = xform_interactions(rewrite_rule_dir)
+    xformer = xform_interactions(rewrite_rule_dir, debug=debug)
     tgt = xformer.create_objects(src_data)
     recieved = len(tgt["interactions"])
     print(
-        "Transformed [" + str(recieved) + "] interactions."
+        "\t-> Transformed [" + str(recieved) + "] interactions."
     )
     print('-'*80, "\n")
     return tgt
@@ -235,12 +232,12 @@ if __name__ == "__main__":
     [status, msg, my_config] = my_utilities.get_config_file(my_args.conf_file)
     [status, msg, my_env] = set_env(my_args, my_config)
 
-     # Print intro unless suppressed
+    # Print intro unless suppressed
     if not my_args.no_intro:
         intro = pyfiglet.figlet_format('Mediumroast S3 Ingest utility.')
-        print(intro, "\n", '-'*80, "\n")
+        print('-'*79, "\n", intro, "\n", '-'*79, "\n")
 
-    # Perform the authentication
+    # Perform authentication
     auth_ctl = authenticate(
         user=my_env['user'], 
         secret=my_env['secret'], 
@@ -253,6 +250,7 @@ if __name__ == "__main__":
     # Create the API controllers
     company_api_ctl = company(credential)
     interaction_api_ctl = interaction(credential)
+    study_api_ctl = study(credential)
 
     # Extract the data from the source
     extracted_data = extract_from_s3(
@@ -272,18 +270,21 @@ if __name__ == "__main__":
     )["companies"]
 
     # Studies transformation
-    # transformed_data["studies"] = transform_studies(
-    #     extracted_data, rewrite_dir=my_env['rewrite_rule_dir']
-    # )["studies"]
+    transformed_data["studies"] = transform_studies(
+        extracted_data, rewrite_rule_dir=my_env['rewrite_rule_dir']
+    )["studies"]
 
     # Interactions transformation
     transformed_data["interactions"] = transform_interactions(
         extracted_data, rewrite_rule_dir=my_env['rewrite_rule_dir']
     )["interactions"]
 
-    # TODO Create the objects as per below
-    for obj_type in ['interactions', 'companies']:
-        print("Ingesting transformed [" + obj_type + "] into the backend.")
+
+    # Ingest the transformed objects one set at a time
+    print('Ingesting all objects into the backend -- object ingest status: o = successful, x = failed.\n')
+    for obj_type in ['interactions', 'companies', 'studies']:
+        print("\t-> Ingesting transformed [" + obj_type + "] into the backend.")
+        print('\t', end='')
         for obj_inst in transformed_data[obj_type]:
             if obj_type == 'companies':
                 [success, msg, resp] = company_api_ctl.create_obj(obj_inst)
@@ -291,6 +292,10 @@ if __name__ == "__main__":
                 else: print('x', end='')
             elif obj_type == 'interactions':
                 [success, msg, resp] = interaction_api_ctl.create_obj(obj_inst)
+                if success: print('o', end='')
+                else: print('x', end='')
+            elif obj_type == 'studies':
+                [success, msg, resp] = study_api_ctl.create_obj(obj_inst)
                 if success: print('o', end='')
                 else: print('x', end='')
         print('\n')

@@ -3,37 +3,43 @@ __author__ = "Michael Hay"
 __date__ = '2022-June-25'
 __copyright__ = "Copyright 2022 Mediumroast, Inc. All rights reserved."
 
-import re
+# Perform key imports
 import json
 
+# Perform local imports
 from .helpers import InteractionHelpers as interactions
 from .helpers import CompanyHelpers as companies
-
-from mr_python.helpers import studies
+from .helpers import StudyHelpers as studies
 from mr_python.helpers import utilities
 
-
 class Transform:
-    """Perform transformation of input data into a proper company object.
+    """Perform the core transformation of input data into a proper company object.
 
-    Returns:
-        list: A list of dicts which can be pass along to additional 
+    Using the transformation rules written into the rules files specified in 'rewrite_rule_dir'
+    create more complete company objects which can then be ingested into the backend. This
+    kind of transformation can be used from any input like files, file systems and S3 compatible
+    object stores where the source data can be massaged into a the following array of arrays.
 
-    Methods:
-        get_description()
-            Lookup a company description from the configuration file and return it.
+    '
+        [
+            [RAW_DATE, REGION, COUNTRY, STATE_PROVINCE, CITY, INDUSTRY, RAW_STUDY_NAME, RAW_COMPANY_NAME, INTERACTION_TYPE, URL],
+            ...
+            [RAW_DATE, REGION, COUNTRY, STATE_PROVINCE, CITY, INDUSTRY, RAW_STUDY_NAME, RAW_COMPANY_NAME, INTERACTION_TYPE, URL]
+        ]
+    '
 
-        get_industry()
-            Lookup a company industry from the configuration file and return it.
+    This input is passed to `create_objects` which in turn generates a dict that contains a list of the company objects
+    and associated metadata.  (Note, that at this time the metadata is still under construction and the documentation will
+    be updated when ready.)  These company objects can then be iterated over and ingested into the backend.  
+    Finally, if the 'debug' argument is set to True then this transformation class will print out every object prior to returning -- the default value of 'debug' is false.  This output is extremely useful if you're making modifications
+    to the transformation and need to debug the results with an external tool like Postman.
 
-        get_name()
-            Lookup a company from the configuration file and return it.
+    Future work:
 
-        make_id()
-            Create a unique company identifier if needed.
-
-        create_objects()
-            Using the attributes set when the object was constructed get the data from the file.
+    There is a requirement to implement 'linked_studies" and 'linked_interactions' attributes for
+    the company objects.  This depends on the backend implementation and may be more complex that the initial 
+    implementation with the 'json_server'.  There are some breadcrumbs and notes in the comments for this linking process
+    within the transformation code.
     """
 
     def __init__(self, rewrite_rule_dir, debug=False):
@@ -99,67 +105,6 @@ class Transform:
                 'longitude': longitude,  
                 'zipPostal': zipPostal}
 
-    #############################################################################################
-    # All methods to create a company's document which include:
-    #   - Introduction
-    #   - Purpose
-    #   - Actions
-    #############################################################################################
-    # INTERNAL METHODS AND HELPER FUNCTIONS
-
-    # def _reformat_name(self, study_name, separator='_'):
-    #     """Internal method to reformat the company name by replacing spaces with the separator."""
-    #     return study_name.replace(' ', separator)
-
-    # # Transform either default or study specific document elements into the proper data structure
-    # def _document_helper(self, section, seperator='_'):
-    #     intro = 'Introduction'
-    #     prps = 'Purpose'
-    #     acts = 'Action'
-    #     document = {
-    #         intro: '',
-    #         prps: {},
-    #         acts: {}
-    #     }
-    #     introduction = re.compile('^Introduction', re.IGNORECASE)
-    #     purpose = re.compile('^Purpose', re.IGNORECASE)
-    #     actions = re.compile('^Action_', re.IGNORECASE)
-    #     for idx in list(self.rules[section]):
-    #         if introduction.match(idx):
-    #             document[intro] = self.rules[section][idx]
-    #         elif purpose.match(idx):
-    #             document[prps] = self.rules[section][idx]
-    #         elif actions.match(idx):
-    #             item_type = idx.split(seperator)[1]
-    #             if item_type == 'Text':
-    #                 document['Action']['text'] = self.rules[section][idx]
-    #             else:
-    #                 document['Action'][item_type] = self.rules[section][idx]
-    #     return document
-
-    # def _replace_company(self, text, company_name):
-    #     text = text.strip()
-    #     text = text.replace('\n', ' ')
-    #     text = text.replace('$COMPANY$', company_name)
-    #     return text
-
-    # def _get_document(self, company_name, xform, default='DEFAULT_PRFAQ'):
-    #     """Internal method to rewrite or augment key aspects of a study object as per definitions in the configuration file."""
-    #     section = self._reformat_name(company_name) + '_PRFAQ'
-    #     document = self._document_helper(section) if self.rules.has_section(
-    #         section) else self._document_helper(default)
-    #     for doc_section in document.keys():
-    #         my_text = document[doc_section]
-    #         if type(my_text) is dict:
-    #             for entry in my_text:
-    #                 local_text = my_text[entry]
-    #                 local_text = self._replace_company(local_text, company_name)
-    #                 my_text[entry] = local_text
-    #         else:
-    #             my_text = self._replace_company(my_text, company_name)
-            
-    #         document[doc_section] = my_text
-    #     return document
 
     def create_objects(self, raw_objects, file_output=True):
         """Create company objects from a raw list of input data.
@@ -180,7 +125,7 @@ class Transform:
 
         # Construct objects
         interaction_xform = interactions(self.RULE_DIR)
-        study_xform = studies(rewrite_config_dir=self.RULE_DIR)
+        study_xform = studies(self.RULE_DIR)
         company_xform = companies(self.RULE_DIR)
 
         # Temp storage for objects
@@ -193,7 +138,7 @@ class Transform:
 
             # Capture the right study_name and then fetch the study's ID
             study_name = study_xform.get_name(object[self.RAW_STUDY_NAME])
-            study_id = study_xform.make_id(study_name)
+            study_id = study_xform.make_uid(study_name)
 
             # Capture the right study_name and then fetch the study's ID
             interaction_name = interaction_xform.get_name(

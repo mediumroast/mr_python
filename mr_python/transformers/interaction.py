@@ -36,14 +36,7 @@ class Transform:
 
     Future work:
 
-    As of today there is no flexibility to rewrite everything or nothing from the initial extraction using rewrite rules. Therefore, the intention will be to enable this behavior in the future.  The obvious reason for enabling this pattern
-    is that the developer may already know how things should be ingested and therefore additional rewrites aren't required.
-    That should handle the case of "perfect knowledge" for the ingestion and transformation process. In the other instance
-    there could be more information from the file system metadata that is correct not requiring rewrites. Additional thinking
-    is needed to figure out a more general solution to both problems.  So as of now we're just enabling base rewrites 
-    without consideration for these two use cases.
-
-    Other than rewrites, there will be a requirement to implement 'linked_studies" and 'linked_companies' attributes for
+    There is a requirement to implement 'linked_studies" and 'linked_companies' attributes for
     the interaction objects.  This depends on the backend implementation and may be more complex that the initial 
     implementation with the 'json_server'.  There are some breadcrumbs and notes in the comments for this linking process
     within the transformation code.

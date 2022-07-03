@@ -179,16 +179,136 @@ class StudyHelpers(BaseHelpers):
     def __init__(self, rewrite_rule_dir, obj_type='study'):
         super().__init__(rewrite_rule_dir, obj_type)
 
+    # Transform either default or study specific document elements into the proper data structure
+    def _document_helper(self, section, seperator='_'):
+        intro='Introduction'
+        opp='Opportunity'
+        acts='Action'
+        document={
+            intro: '',
+            opp: {},
+            acts: {}
+        }
+        introduction=re.compile('^Introduction', re.IGNORECASE)
+        opportunities=re.compile('^Opportunity_', re.IGNORECASE)
+        actions=re.compile('^Action_', re.IGNORECASE)
+        for idx in list(self.rewrite_rules[section]):
+            if introduction.match(idx): 
+                document[intro]=self.rewrite_rules[section][idx]
+            elif opportunities.match(idx):
+                item_type=idx.split(seperator)[1]
+                if item_type == 'Text': document['Opportunity']['text']=self.rewrite_rules[section][idx]
+                else: document['Opportunity'][item_type]=self.rewrite_rules[section][idx]
+            elif actions.match(idx):
+                item_type=idx.split(seperator)[1]
+                if item_type == 'Text': document['Action']['text']=self.rules[section][idx]
+                else: document['Action'][item_type]=self.rewrite_rules[section][idx]
+        return document
+
+    def get_document (self, study_name, default='DEFAULT_PRFAQ'):
+        """Internal method to rewrite or augment key aspects of a study object as per definitions in the configuration file."""
+        section=self.util.reformat_name(study_name) + '_PRFAQ'
+        document=self._document_helper(section) if self.rewrite_rules.has_section(section) else self._document_helper(default)
+        return document
+
+    # Transform either default or study specific questions into the proper data structure
+    def _questions_helper(self, section, separator='|'):
+        """Helper method for _get_questions to obtain, parse, format and return a question."""
+        questions=dict()
+        # to_skip=re.compile(self.to_skip, re.IGNORECASE)
+        for idx in list(self.rewrite_rules[section]):
+            # if to_skip.match(idx): continue
+            question=self.rewrite_rules[section][idx].split(separator)
+            state=True if question[1] == 'True' else False
+            questions[idx]={
+                "question": question[0],
+                "notes": question[2],
+                "included": state
+            }
+        return questions
+
+    # TODO the following section related to substudies, is in need of being significantly reworked.
+    #       The immediate method below is an example which needs to be changed. One specific case
+    #       is the 'get_substudy()' method that can be directly accessed here without needing to be
+    #       passed in as an argument to the method.
+
+    # Pull in the interactions to the substudy
+    def _get_interactions(self, interactions, substudy, interaction_xform):
+        """Internal method to create the iterations structure"""
+        final_interactions={}
+        for interaction in interactions:
+            substudy_id, company_itr_id=interaction_xform.get_substudy_id(interaction)
+            if substudy_id == substudy:
+                final_interactions[interaction]={
+                        "GUID": interactions[interaction],
+                        "abstractState": False # set the default to False
+                }
+            else: continue
+        return final_interactions
+    
+    def _get_questions(self, study_name, substudy):
+        """Internal method to obtain either the default set of questions or the study specific set of questions."""
+        section=self.util.reformat_name(study_name) + '_Substudy_' + substudy + '_Questions'
+        questions=self._questions_helper(section) if self.rewrite_rules.has_section(section) else dict()
+        return questions
+
+    def _noises_helper(self, section):
+        """Helper method for _get_noises to obtain, parse, format and return the noises."""
+        noises=dict()
+        to_skip=re.compile(self.to_skip, re.IGNORECASE)
+        for idx in list(self.rules[section]):
+            if to_skip.match(idx): continue
+            noise=self.rewrite_rules[section][idx]
+            noises[idx]=noise
+        return noises
+    
+    def _get_noises(self, study_name, substudy):
+        """Internal method to obtain the set of study noises if they exist."""
+        section=self.util.reformat_name(study_name) + '_Substudy_' + substudy + '_Noises'
+        noises=self._noises_helper(section) if self.rewrite_rules.has_section(section) else dict()
+        return noises
+
+    def _get_substudy_type(self, study_name, substudy):
+        section=self.util.reformat_name(study_name) + '_Substudy_Types'
+        substudy_type=self.rewrite_rules.get(section, substudy) if self.rewrite_rules.has_option(section, substudy) else self.rewrite_rules.get('DEFAULT', 'substudy_type')
+        return substudy_type
+
+    # TODO reimplement according to the substudies construct in the backend
+    def make_substudies(self, study, interaction_xform):
+        theme_state=False # Define the default state of a substudy's theme; NOTE: should assign only after we detect if there are more than system assigned default themes
+        final_substudies=dict() # Where we will store the final structure to be returned
+        config_pre=self.util.reformat_name(study['studyName']) + '_Substudy_'
+
+        # Process each substudy
+        for substudy in study['substudies'].keys():
+            definition=self.rules.get(config_pre + 'Definitions', substudy) if self.rules.has_section(config_pre + 'Definitions') else self.rules.get('DEFAULT', 'substudy_definition')
+            name, description=definition.split('|')
+            guid=self.util.hash_it(name + description) # For now set the GUID to be the combo of name and description, may be overidden by the DB in the future.
+            final_substudies[substudy]={
+                'type': self._get_substudy_type(study['studyName'], substudy),
+                'totalInteractions': 0, # Set this sum to 0 # TODO deprecated
+                'totalQuestions': 0, # Set this sum to 0 # TODO deprecated
+                'totalThemes': 0, # Set this sum to 0 # TODO deprecated
+                'noiseText': self._get_noises(study['studyName'], substudy),
+                'name': name,
+                'description': description,
+                'GUID': guid, # TODO deprecated
+                'interactions': self._get_interactions(study['linkedInteractions'], substudy, interaction_xform), # This needs to be reworked to get the substudy interactions
+                'questions': self._get_questions(study['studyName'], substudy),
+                'keyThemes': self._get_themes(study['studyName'], substudy), # TODO moved to be generated by caffeine, needed here?
+                'keyThemeQuotes': self._get_theme_quotes(study['studyName'], substudy), # TODO moved to be generated by caffeine, needed here?
+            }
+            final_substudies[substudy]['totalInteractions']=self.util.total_item(final_substudies[substudy]['interactions']) # TODO deprecated
+            final_substudies[substudy]['totalQuestions']=self.util.total_item(final_substudies[substudy]['questions']) # TODO deprecated
+            final_substudies[substudy]['totalThemes']=self.util.total_item(final_substudies[substudy]['keyThemes']) # TODO deprecated
+            if final_substudies[substudy]['totalThemes'] > 0: theme_state=True # TODO deprecated and this logic is not needed
+            final_substudies[substudy]['themeState']=theme_state # TODO theme state should always be False at first ingest
+        return final_substudies
+
 class CompanyHelpers(BaseHelpers):
     def __init__(self, rewrite_rule_dir, obj_type='company'):
         super().__init__(rewrite_rule_dir, obj_type)
-
         self.DEFAULT_DOC = 'DEFAULT_PRFAQ'
-
-    # TODO look at study helpers to see if this should be a generic utility
-    def _reformat_name(self, company_name, separator='_'):
-        """Internal method to reformat the company name by replacing spaces with the separator."""
-        return company_name.replace(' ', separator)
 
     def _replace_company(self, text, company_name):
         text = text.strip()
@@ -227,7 +347,7 @@ class CompanyHelpers(BaseHelpers):
         """
 
         # Create the section for the company doc
-        my_section = self._reformat_name(company_name) + '_PRFAQ'
+        my_section = self.util.reformat_name(company_name) + '_PRFAQ'
 
         # Check to see if the section exists otherwise revert to the default
         my_document = self._document_helper(my_section) if self.rewrite_rules.has_section(
