@@ -5,6 +5,7 @@ __copyright__ = "Copyright 2022 Mediumroast, Inc. All rights reserved."
 
 
 import hashlib
+import random
 import datetime
 import os
 import json
@@ -88,6 +89,17 @@ class utilities:
         """
         return magic.from_file(folder + '/' + item)
 
+    def get_config_file(self, filename):
+        """A safe wrapper around reading a INI inspired config file.
+        """
+        config = conf.ConfigParser()
+        try:
+            config.read(filename)
+        except conf.Error as err:
+            return False, {"status_code": "FAILED", "message": err}
+
+        return True, {"status_code": "SUCCEEDED"}, config
+
     def log_it(self, body='', function='MAIN', log_type='START'):
         """This is a very simple standin logger, ideally we will revert back to logging at some point
         """
@@ -155,16 +167,17 @@ class utilities:
             my_date = my_date[0:8]
         return my_date, my_time
 
-    # TODO consider refactoring for clear separation of date and time
-
-    # def get_date_time(self):
-    #     """Get the time presently and return in two formats
-    #     """
-    #     the_time_is = time.localtime()
-    #     time_concat = the_time_is.tm_year + the_time_is.tm_mon + \
-    #         the_time_is.tm_mday + the_time_is.tm_hour + the_time_is.tm_min
-    #     time_formal = time.asctime(the_time_is)
-    #     return time_concat, time_formal
+    def get_iso_datetime(self, date_data=None):
+        """If 'date_data" is provided compute and return the time according to the data, otherwise assume now and return
+        """
+        if date_data:
+            return datetime.datetime(
+                date_data['year'], 
+                date_data['month'], date_data['day'], 
+                hour=date_data['hour'], 
+                minute=date_data['minute']).isoformat()
+        else:
+            return datetime.datetime.now().isoformat()
 
     def get_date_time(self):
         the_time = datetime.datetime.now()
@@ -215,6 +228,23 @@ class utilities:
         """
         (time_stamp, time_string) = self.get_date_time()
         return {"1": {time_stamp: "This is an example note created for the '" + obj_type + "' object on " + time_string + " by a " + creator}}
+
+    def get_random_status(self, range=4):
+        """An method to compute a random status to drive UX functionality.
+
+        In the backend the statuses are mapped to integers and defined as.
+
+            Completed: 0
+            Scheduled: 1
+            Canceled: 2
+            Planned: 3
+            Unknown: 4
+        """
+        return random.randrange(0, range)
+
+    def reformat_name(self, obj_name, separator='_'):
+        """Internal method to reformat the an object name by replacing spaces with the separator."""
+        return obj_name.replace(' ', separator)
 
 
 class companies:
@@ -296,11 +326,7 @@ class companies:
         Returns:
             string: A textual representation of the company's ID
         """
-        description = self.get_description(company_name)
-        id = 'NULL_GUID'
-        if file_output:
-            id = self.util.hash_it(company_name + description)
-        return id
+        return self.util.hash_it(company_name)
 
 
 class studies:
@@ -366,101 +392,5 @@ class studies:
         Returns:
             string: A textual representation of the study's ID
         """
-        description = self.get_description(study_name)
-        id = 'NULL_GUID'  # This should never happen, but leaving here in case something is odd in the configuration file
-        if file_output:
-            id = self.util.hash_it(study_name + description)
-        return id
+        return self.util.hash_it(study_name)
 
-
-class interactions:
-
-    def __init__(self, rewrite_config_dir="../src/mediumroast/transformers/"):
-        self.RULES = {
-            'dir': rewrite_config_dir,
-            'company': 'company.ini',
-            'study': 'study.ini',
-            'interaction': 'interaction.ini'
-        }
-        self.rules = conf.ConfigParser()
-        self.rules.read(self.RULES['dir'] + self.RULES['interaction'])
-        self.util = utilities()
-
-    def get_name(self, date, study_name, company_name):
-        """Create an interaction name and return the resulting string.
-
-        Generate an interaction name from the date and study_name
-
-        Args:
-            study_name (str): The study name which should ideally be reformatted to the proper name.
-            date (str): A raw date for the interaction, this needs to be the same date fed to the interaction transform
-
-        Returns:
-            string: The generated name of the interaction which is the synthesis of the date string and study name
-
-        """
-        return str(date) + '-' + str(study_name) + '-' + str(company_name)
-
-    def get_description(self, company_name, study_name):
-        """Create a description from the interaction.
-
-        Using a default in the configuration file merge in company and study names to generate a description for 
-        the interaction.
-
-        Args:
-            company_name (str): The company name which aligns to the name within the configuration file.
-            study_name (str): The study name which aligns to the name within the configuration file.
-
-        Returns:
-            string: A generated textual description generated from the company and study names.
-        """
-        description = self.rules.get('DEFAULT', 'description')
-        description = description.replace("COMPANY", str(company_name))
-        description = description.replace("STUDYNAME", str(study_name))
-        return description
-
-    def make_id(self, date, company_name, study_name, file_output=True):
-        """Create an identifier for the interation.
-
-        Create a identifier for the interaction which is either 'NULL_GUID' or a GUID generated by hashing
-        the interaction name with the interaction description.  The latter is only done when the output is to a JSON
-        file.  In the implementation with the backend we should revisit this logic to see if it is enven necessary
-        or perhaps the backend handles all of this.
-
-        Args:
-            company_name (str): The company name which aligns to the name within the configuration file.
-            study_name (str): The study name which aligns to the name within the configuration file.
-            file_output (bool): A switch for determining if we're storing the output in a file or not
-
-        Returns:
-            string: A textual representation of the interactions's ID
-        """
-        interaction_name = self.get_name(date, study_name, company_name)
-        description = self.get_description(company_name, study_name)
-        id = 'NULL_GUID'  # This should never happen, but leaving here in case something is odd in the configuration file
-        if file_output:
-            id = self.util.hash_it(interaction_name + description)
-        return id
-
-    def get_substudy_id(self, interaction_name):
-        """Lookup study and company substudy ids and return them.
-
-        If there are rewrite rules available for the interaction name related to the substudy ids for one or both
-        of the associated company and study return them else return default.  Substudy ids are needed to construct
-        subcorpuses for both company and study objects to build at least proper summarizations when there is no 
-        questionnaire.  While there is more research needed it is also likely a helpful grouping for KeyTheme detection
-        and associated extraction.
-
-        Args:
-            interaction_name (str): The name of the interaction
-
-
-        Returns:
-            substudy_id (str): A textual representation of the iteration id of within the study for the interaction
-            company_iteration_id (str): A textual representation of the iteration id of within the company for the interaction
-        """
-        substudy_id = self.rules.get('substudy_mappings', interaction_name) if self.rules.has_option(
-            'substudy_mappings', interaction_name) else "default"
-        company_iteration_id = self.rules.get('iterations_companies', interaction_name) if self.rules.has_option(
-            'iterations_companies', interaction_name) else "default"
-        return substudy_id, company_iteration_id

@@ -1,197 +1,202 @@
-__version__ = '1.0'
-__author__  = "Michael Hay"
-__date__    = '2021-September-12'
-__copyright__ = "Copyright 2021 mediumroast.io. All rights reserved."
+__version__ = '2.0'
+__author__ = "Michael Hay"
+__date__ = '2022-June-27'
+__copyright__ = "Copyright 2022 Mediumroast, Inc. All rights reserved."
 
-import sys, random
-sys.path.append('../')
+# Perform key imports
+import json
 
+# Perform local imports
+from .helpers import InteractionHelpers as interactions
+from .helpers import CompanyHelpers as companies
+from .helpers import StudyHelpers as studies
 from mr_python.helpers import utilities
-from mr_python.helpers import companies
-from mr_python.helpers import interactions
-from mr_python.helpers import studies
-import configparser as conf
 
 class Transform:
-    """Perform transformation of input data into a proper company object.
+    """Perform the core transformation of input data into a proper interaction object.
 
-    Returns:
-        list: A list of dicts which can be pass along to additional 
+    Using the transformation rules written into the rules files specified in 'rewrite_rule_dir'
+    create more complete interaction objects which can then be ingested into the backend. This
+    kind of transformation can be used from any input like files, file systems and S3 compatible
+    object stores where the source data can be massaged into a the following array of arrays.
 
-    Methods:
-        get_description()
-            Lookup a company description from the configuration file and return it.
+    '
+        [
+            [RAW_DATE, REGION, COUNTRY, STATE_PROVINCE, CITY, INDUSTRY, RAW_STUDY_NAME, RAW_COMPANY_NAME, INTERACTION_TYPE, URL],
+            ...
+            [RAW_DATE, REGION, COUNTRY, STATE_PROVINCE, CITY, INDUSTRY, RAW_STUDY_NAME, RAW_COMPANY_NAME, INTERACTION_TYPE, URL]
+        ]
+    '
 
-        get_industry()
-            Lookup a company industry from the configuration file and return it.
+    This input is passed to `create_objects` which in turn generates a dict that contains a list of the interaction objects
+    and associated metadata.  (Note, that at this time the metadata is still under construction and the documentation will
+    be updated when ready.)  These interaction objects can then be iterated over and ingested into the backend.  
+    Finally, if the 'debug' argument is set to True then this transformation class will print out every object prior to returning -- the default value of 'debug' is false.  This output is extremely useful if you're making modifications
+    to the transformation and need to debug the results with an external tool like Postman.
 
-        create_objects()
-            Using the attributes set when the object was constructed get the data from the file.
+    Future work:
+
+    There is a requirement to implement 'linked_studies" and 'linked_companies' attributes for
+    the interaction objects.  This depends on the backend implementation and may be more complex that the initial 
+    implementation with the 'json_server'.  There are some breadcrumbs and notes in the comments for this linking process
+    within the transformation code.
     """
 
-    def __init__ (self, rewrite_config_dir='../src/mediumroast/transformers/', debug=False):
-        # TODO consume the additional defaults for URL, etc.
-        self.RAW_COMPANY_NAME=7
-        self.RAW_STUDY_NAME=6
-        self.RAW_DATE=0
-        self.REGION=1
-        self.COUNTRY=2
-        self.STATE_PROVINCE=3
-        self.CITY=4
-        self.URL=9
-        self.THUMBNAIL=10
-        self.DATETIME=0
-        self.RULES={
-            'dir': rewrite_config_dir,
-            'company': 'company.ini',
-            'study': 'study.ini',
-            'interaction': 'interaction.ini'
-        }
-        
-        # TODO wrap a try catch loop around the config file read
-        self.rules=conf.ConfigParser()
-        self.rules.read(self.RULES['dir'] + self.RULES['interaction'])
+    def __init__(self, rewrite_rule_dir, policy='standard', debug=False):
+        self.RAW_COMPANY_NAME = 7
+        self.RAW_STUDY_NAME = 6
+        self.RAW_DATE = 0
+        self.REGION = 1
+        self.COUNTRY = 2
+        self.STATE_PROVINCE = 3
+        self.CITY = 4
+        self.URL = 9
+        self.DATETIME = 0
+        self.RULE_DIR = rewrite_rule_dir
 
         # This imports the local utilies from mr_sdk for Python
-        self.util=utilities()
+        self.util = utilities()
 
         # Set debug to true or false
-        self.debug=debug
+        self.debug = debug
 
-        # TODO Update for this object type and put into the various helper methods.  This is wrong as of now
-        # Specify what to skip when processing sections in the conf file
-        self.to_skip=r"^description|groups|security_scope|substudies|substudy_definition|substudy_type"
+        # Set the rewrite behavior
+        self.rewrite_policy = policy # Potential states: none, standard, extended, all we may want to implement 1 or 2 only
 
-    # TODO rewrite this to follow the load_studies utility
-
-    def _transform_interaction (self, interaction_name):
+    def _transform_interaction(self, interaction_name, xform):
         """Internal method to rewrite or augment key aspects of an interaction object as per definitions in the configuration file."""
-        
+
         # Add the items which are either rewritten or not present in the file_name metadata.
-        groups=self.rules.get('groups', interaction_name) if self.rules.has_option('groups', interaction_name) else self.rules.get('DEFAULT', 'groups')
-        abstract=self.rules.get('abstracts', interaction_name) if self.rules.has_option('abstracts', interaction_name) else self.rules.get('DEFAULT', 'abstract')
-        status=self.rules.get('statuses', interaction_name) if self.rules.has_option('statuses', interaction_name) else self.rules.get('DEFAULT', 'status')
-        interaction_type=self.rules.get('types', interaction_name) if self.rules.has_option('types', interaction_name) else self.rules.get('DEFAULT', 'type')
-        contact_address=self.rules.get('contact_addresses', interaction_name) if self.rules.has_option('contact_addresses', interaction_name) else self.rules.get('DEFAULT', 'contact_address')
-        contact_zipPostal=self.rules.get('contact_zipPostals', interaction_name) if self.rules.has_option('contact_zipPostals', interaction_name) else self.rules.get('DEFAULT', 'contact_zipPostal')
-        contact_phone=self.rules.get('contact_phones', interaction_name) if self.rules.has_option('contact_phones', interaction_name) else self.rules.get('DEFAULT', 'contact_phone')
-        contact_linkedin=self.rules.get('contact_linkedins', interaction_name) if self.rules.has_option('contact_linkedins', interaction_name) else self.rules.get('DEFAULT', 'contact_linkedin')
-        contact_email=self.rules.get('contact_emails', interaction_name) if self.rules.has_option('contact_emails', interaction_name) else self.rules.get('DEFAULT', 'contact_email')
-        contact_twitter=self.rules.get('contact_twitters', interaction_name) if self.rules.has_option('contact_twitters', interaction_name) else self.rules.get('DEFAULT', 'contact_twitter')
-        contact_name=self.rules.get('contact_names', interaction_name) if self.rules.has_option('contact_names', interaction_name) else self.rules.get('DEFAULT', 'contact_name')
-        security_scope=self.rules.get('security_scopes', interaction_name) if self.rules.has_option('security_scopes', interaction_name) else self.rules.get('DEFAULT', 'security_scope')
-        security_scope=True if security_scope == 'True' else False
+        groups = xform.get_from_section(interaction_name, 'groups', 'groups')
+        abstract = xform.get_from_section(interaction_name, 'abstracts', 'abstract')
+        status = xform.get_from_section(interaction_name, 'statuses', 'status')
+        interaction_type = xform.get_from_section(interaction_name, 'types', 'type')
+        contact_address = xform.get_from_section(interaction_name, 'contact_addresses', 'contact_address')
+        contact_zip_postal = xform.get_from_section(interaction_name, 'contact_zip_postals', 'contact_zip_postal')
+        contact_phone = xform.get_from_section(interaction_name, 'contact_phones', 'contact_phone')
+        contact_linkedin = xform.get_from_section(interaction_name, 'contact_linkedins', 'contact_linkedin')
+        contact_email  = xform.get_from_section(interaction_name, 'contact_emails', 'contact_email')
+        contact_twitter = xform.get_from_section(interaction_name, 'contact_twitters', 'contact_twitter')
+        contact_name = xform.get_from_section(interaction_name, 'contact_names', 'contact_name')
+        security_scope = xform.get_from_section(interaction_name, 'security_scopes', 'security_scope')          
+        security_scope = True if security_scope == 'True' else False
 
         return {'groups': groups,
                 'abstract': abstract,
                 'status': status,
                 'interactionType': interaction_type,
                 'contactAddress': contact_address,
-                'contactZipPostal': contact_zipPostal,
+                'contactZipPostal': contact_zip_postal,
                 'contactPhone': contact_phone,
                 'contactLinkedIn': contact_linkedin,
                 'contactEmail': contact_email,
                 'contactTwitter': contact_twitter,
                 'contactName': contact_name,
-                'public': security_scope}
-    
-    
-    def _get_status(self, range=4):
-        """An internal method to compute a random status to drive UX functionality
-        """
-        idx=random.randrange(0, range)
-        statuses=['Completed', 'Scheduled', 'Canceled', 'Planned', 'Unknown']
-        return statuses[idx]
+                'public': security_scope,
+                'local_id': xform.make_uid(interaction_name)} # NOTE it is expected that this will be required for linkedX
 
- 
-    def create_objects (self, raw_objects, file_output=True):
-        """Create study objects from a raw list of input data.
+
+    def create_objects(self, raw_objects):
+        """Create interaction objects from a raw list of input data.
 
         As this is the main transformation function of the class enabling a properly formatted set of objects that can
         either be passed to a file or the backend.  The former is more for advancing the GUI, etc. while the latter
         is related to exercising the entire system.
 
         Args:
-            raw_objects (list): Raw objects generated from a one of the extractor methods.
+            raw_objects (list): Raw objects generated from an extractor in the expected format, see early documentation.
 
         Returns:
-            dict: An object containing a list of all company objects and the total number of company objects processed
+            dict: An object containing a list of all company objects and other helper metadata.
         """
-        final_objects={
-            'totalInteractions': 0,
+        
+        # This is the final dict  to return, it is expected that some amount of helper metadata
+        # will be required in the future especially for linked_studies and linked_companies.
+        # Notice that the ealier impl
+        final_objects = {
             'interactions': []
-        }  
+        }
 
         # Temp storage for objects
-        tmp_objects={}
+        tmp_objects = {}
 
         for object in raw_objects:
 
             # Capture the right study_name and then fetch the study's ID
-            study_xform=studies(rewrite_config_dir=self.RULES['dir'])
-            study_name=study_xform.get_name (object[self.RAW_STUDY_NAME]) 
-            study_id=study_xform.make_id (study_name) 
+            study_xform = studies(self.RULE_DIR)
+            study_name = study_xform.get_name(object[self.RAW_STUDY_NAME])
+            study_id = study_xform.make_uid(study_name)
 
             # Capture the right company_name and then fetch the study's ID
-            company_xform=companies(rewrite_config_dir=self.RULES['dir'])
-            company_name=company_xform.get_name (object[self.RAW_COMPANY_NAME])
-            company_id=company_xform.make_id (company_name) 
-            
-            # Perform basic transformation of company data based upon data in the configuration file
-            interaction_xform=interactions(rewrite_config_dir=self.RULES['dir'])
-            interaction_name=interaction_xform.get_name(object[self.RAW_DATE], study_name, company_name)
-            interaction_obj=self._transform_interaction(interaction_name)
-            interaction_date, interaction_time=self.util.correct_date(object[self.DATETIME])
+            company_xform = companies(self.RULE_DIR)
+            company_name = company_xform.get_name(object[self.RAW_COMPANY_NAME])
+            company_id = company_xform.make_uid(company_name)
 
-                        
+            # Perform basic transformation of company data based upon data in the configuration file
+            interaction_xform = interactions(self.RULE_DIR)
+            interaction_name = interaction_xform.get_name(object[self.RAW_DATE], study_name, company_name)
+            interaction_obj = self._transform_interaction(interaction_name, interaction_xform)
+            [interaction_date, interaction_time] = self.util.correct_date(object[self.DATETIME])
+            interaction_id = interaction_xform.make_uid(interaction_name)
+
+            # Set the specific dates for the interaction
+            interaction_creation = self.util.get_iso_datetime()
+            my_time = {
+                'year': int(interaction_date[0:4]),
+                'month': int(interaction_date[4:6]),
+                'day': int(interaction_date[6:8]),
+                'hour': int(interaction_time[0:2]),
+                'minute': int(interaction_time[2:3])
+            }
+            interaction_date_time = self.util.get_iso_datetime(date_data=my_time)
+
             # TODO the date needs to be fixed potentially with the helper functions included
-            # TODO this is only partially implemented and needs to be looked at again
-            if tmp_objects.get (interaction_name) == None:
-                long_lat = self.util.locate (object[self.CITY] + ',' + object[self.STATE_PROVINCE] + ',' + object[self.COUNTRY])
+            if tmp_objects.get(interaction_name) == None:
+                long_lat = self.util.locate(
+                    object[self.CITY] + ',' + object[self.STATE_PROVINCE] + ',' + object[self.COUNTRY])
                 tmp_objects[interaction_name] = {
-                    "interactionName": interaction_name,
-                    "time": interaction_time,
-                    "date": interaction_date,
-                    "state": "unsummarized",
-                    "simpleDesc": interaction_xform.get_description(company_name, study_name),
-                    "contactAddress": interaction_obj['contactAddress'],
-                    "contactZipPostal": interaction_obj['contactZipPostal'],
-                    "contactPhone": interaction_obj['contactPhone'],
-                    "contactLinkedIn": interaction_obj['contactLinkedIn'],
-                    "contactEmail": interaction_obj['contactEmail'],
-                    "contactTwitter": interaction_obj['contactTwitter'],
-                    "contactName": interaction_obj['contactName'],
+                    "creator_id":1, # TODO it is a bug if this is required
+                    "owner_id": 1, # TODO it is a bug if this is required
+                    "name": interaction_name,
+                    "description": interaction_xform.get_description(study_name, company_name),
+                    "creation_date": interaction_creation,
+                    "modification_date": interaction_creation,
+                    "date_time": interaction_date_time,
                     "public": interaction_obj['public'],
-                    "abstract": interaction_obj['abstract'],
-                    "interactionType": interaction_obj['interactionType'],
-                    "status": self._get_status(),
-                    "linkedStudies": {study_name: study_id},
-                    "linkedCompanies": {company_name: company_id},
+                    "groups": 'user:studyadmin',
                     "longitude": long_lat[0],
                     "latitude": long_lat[1],
+                    "contact_name": interaction_obj['contactName'],
+                    "contact_email": interaction_obj['contactEmail'],
+                    "contact_linkedin": interaction_obj['contactLinkedIn'],
+                    "contact_twitter": interaction_obj['contactTwitter'],
                     "url": object[self.URL],
-                    "thumbnail": object[self.THUMBNAIL],
-                    "notes": self.util.make_note(obj_type='Interaction Object: [' + interaction_name + ']')
+                    "city": object[self.CITY],
+                    "street_address": interaction_obj['contactAddress'],
+                    "zip_postal": interaction_obj['contactZipPostal'],
+                    "state_province": object[self.STATE_PROVINCE],
+                    "country": object[self.COUNTRY],
+                    "region": object[self.REGION],
+                    "phone": interaction_obj['contactPhone'],
+                    "interaction_type": 1, # TODO this should be transformed to a string
+                    "status": self.util.get_random_status(), # NOTE this is remedied as the status can range from 0 - 4
+                    "abstract": interaction_obj['abstract'],
+                    "thumbnail": object[self.URL] # TODO this is deprecated
+                    # "state": "unsummarized", # TODO the state variable is needed should be boolean associated to abstract state
+                    # "linkedStudies": {study_name: study_id}, # TODO verify implementation
+                    # "linkedCompanies": {company_name: company_id}, # TODO verify implementation    
                 }
-            else:
-                tmp_objects[interaction_name]["linkedStudies"][study_name]=study_id
-                tmp_objects[interaction_name]["linkedCompanies"][company_name]=company_id
+            # TODO resolve how to fix linked interactions, this isn't supported for now
+            # else:
+            #     tmp_objects[interaction_name]["linkedStudies"][study_name] = study_id
+            #     tmp_objects[interaction_name]["linkedCompanies"][company_name] = company_id
 
+        for interaction in tmp_objects.keys():
 
-        # TODO Look at the study.py module for the right approach here
-        for interaction in tmp_objects.keys ():
-            if file_output:
-                # Generally the model to create a GUID is to hash the name and the description for all objects.
-                # We will only use this option when we're outputing to a file.
-                guid=self.util.hash_it(interaction + tmp_objects[interaction]['simpleDesc'])
-                tmp_objects[interaction]['GUID']=guid
-                tmp_objects[interaction]['id']=guid
-            tmp_objects[interaction]['totalStudies']=self.util.total_item(tmp_objects[interaction]['linkedStudies'])
-            tmp_objects[interaction]['totalCompanies']=self.util.total_item(tmp_objects[interaction]['linkedCompanies'])
-            final_objects['interactions'].append (tmp_objects[interaction])
+            # In case we're debugging print out each object
+            if self.debug: print(json.dumps(tmp_objects[interaction]))
 
-        final_objects['totalInteractions'] = self.util.total_item(final_objects['interactions'])
+            # Add the object to the final set dict
+            final_objects['interactions'].append(tmp_objects[interaction])
 
         return final_objects
-
-    
