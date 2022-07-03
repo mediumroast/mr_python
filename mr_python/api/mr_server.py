@@ -3,6 +3,8 @@ __author__ = "Michael Hay"
 __date__ = '2022-June-11'
 __copyright__ = "Copyright 2021 mediumroast.io. All rights reserved."
 
+# TODO Remove server_type from implementation since it is deprecated
+
 from . scaffold import mr_rest
 from ..helpers import utilities
 
@@ -68,9 +70,6 @@ class BaseObjects:
 class Users(BaseObjects):
     def __init__(self, credential):
         super().__init__(credential, obj_type='users')
-
-    def get_all(self):
-        return super().get_all(endpoint='users')
 
 class Studies(BaseObjects):
     def __init__(self, credential):

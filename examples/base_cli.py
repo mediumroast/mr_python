@@ -43,17 +43,18 @@ class MrCLI:
             default=str(pathlib.Path.home()) + '/.mediumroast/config.ini',
         )
         parser.add_argument(
-            "--rest_url",
-            help="The URL of the target REST server",
+            "--mr_backend_url",
+            help="The URL of the target mediumroast.io server",
             type=str,
             dest="rest_server",
         )
         parser.add_argument(
             "--api_key",
-            help="The API key needed to talk to the backend",
+            help="The API key needed to talk to the mediumroast.io server",
             type=str,
             dest="api_key",
         )
+        # TODO this is deprecated and should be removed in a future cleanup
         parser.add_argument(
             "--server_type",
             help="The API key needed to talk to the backend",
@@ -142,6 +143,7 @@ class MrCLI:
             'user': None,
             'secret': None,
             'api_key': None,
+            # TODO this is deprecated and should be removed in a future cleanup
             'server_type': None
         }
 
@@ -150,6 +152,7 @@ class MrCLI:
         env['user'] = cli_args.user if cli_args.user else config['DEFAULT']['user']
         env['secret'] = cli_args.secret if cli_args.secret else config['DEFAULT']['secret']
         env['api_key'] = cli_args.api_key if cli_args.api_key else config['DEFAULT']['api_key']
+        # TODO this is deprecated and should be removed in a future cleanup
         env['server_type'] = cli_args.server_type if cli_args.server_type else config['DEFAULT']['server_type']
 
         return True, {"status_code": "SUCCEEDED"}, env
@@ -165,6 +168,7 @@ class MrCLI:
             for obj in my_objs:
                 [success, msg, resp] = api_controller.create_obj(obj)
                 if success:
+                    print("Backend response: ", end="")
                     if self.args.pretty_output:
                         self.printer.pprint(resp)
                     else:
@@ -172,13 +176,14 @@ class MrCLI:
                 else:
                     print('An error occured: ', msg)
                     sys.exit(-1)
-            print('Successfully created [' + str(self.util.total_item(my_objs)) + '] ' + object_type + 'objects, exiting.')
+            print('Successfully created [' + str(self.util.total_item(my_objs)) + '] ' + object_type + ' object(s), exiting.')
             sys.exit(0)
         elif self.args.update_obj:
             # Create objects from a json file
             my_obj = json.loads(self.args.update_obj)
             [success, msg, resp] = api_controller.update_obj(my_obj)
             if success:
+                print("Backend response: ", end="")
                 if self.args.pretty_output:
                     self.printer.pprint(resp)
                 else:
@@ -186,7 +191,7 @@ class MrCLI:
             else:
                     print('CLI Error: ', msg)
                     sys.exit(-1)
-            print('Successfully updated [' + my_obj['id'] + '] ' + object_type + 'objects, exiting.')
+            print('Successfully updated ' + object_type + ' object with id [' + str(my_obj['id']) + '] exiting.')
             sys.exit(0)
         elif self.args.by_name:
             # Get a single user by name

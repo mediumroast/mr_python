@@ -23,8 +23,8 @@
         "country":"N/A",
         "region":"N/A",
         "phone":"N/A",
-        "interaction_type":"whitepaper",
-        "status":"unabstracted",
+        "interaction_type":1,
+        "status":2,
         "abstract":"I wish I wasn't so harry.",
         "thumbnail":"https://this.is.a.thumbnail"
     }
