@@ -101,7 +101,7 @@ class InteractionHelpers(BaseHelpers):
 
         # NOTE This is the template description which also shows up in the 'interaction.ini'
         #       rule file.  You will need to update in both places if you plan to customize.
-        self.desc_template = 'Learn from COMPANY, either in person or digitally, key points and inputs related to the study STUDYNAME'
+        self.desc_template = 'Learn from COMPANY, either in person or digitally, key points and inputs related to the study STUDYNAME.'
 
     def get_name(self, date, study_name, company_name):
         """Construct an object name using key system metadata including study and company names, plus a date.
@@ -217,7 +217,7 @@ class StudyHelpers(BaseHelpers):
         questions=dict()
         # to_skip=re.compile(self.to_skip, re.IGNORECASE)
         for idx in list(self.rewrite_rules[section]):
-            # if to_skip.match(idx): continue
+            # ./compa   if to_skip.match(idx): continue
             question=self.rewrite_rules[section][idx].split(separator)
             state=True if question[1] == 'True' else False
             questions[idx]={
