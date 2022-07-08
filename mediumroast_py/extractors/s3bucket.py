@@ -2,13 +2,14 @@ __version__ = '1.0'
 __author__  = "Michael Hay, John Goodman"
 __date__    = '2021-September-12'
 __copyright__ = "Copyright 2021 mediumroast.io. All rights reserved."
-import sys, re, os, boto3
-sys.path.append('../')
 
+import re
+import boto3
 from urllib.parse import urlparse
 from urllib.parse import unquote
-from mr_python.helpers import utilities
 from botocore.client import Config
+
+from ..helpers import utilities
 
 class Extract:
     def __init__ (self, url='http://192.168.1.42:9000', access='medium_roast_io', secret='b7d1ac5ec5c2193a7d6dd61e7a8a76451885da5bd754b2b776632afd413d53e7', bucket='interactions', debug=False):

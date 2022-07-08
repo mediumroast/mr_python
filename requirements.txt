@@ -1,9 +1,0 @@
-requests
-pyfiglet
-spacy
-boto3
-python-magic
-pdfx
-pydocx
-python-pptx
-geopy
