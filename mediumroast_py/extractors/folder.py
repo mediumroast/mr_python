@@ -1,4 +1,4 @@
-from mr_python.helpers import utilities
+
 __version__ = '1.0'
 __author__ = "Michael Hay"
 __date__ = '2021-August-30'
@@ -7,6 +7,8 @@ __copyright__ = "Copyright 2022 mediumroast.io. All rights reserved."
 import os
 import re
 import spacy
+
+from ..helpers import utilities
 
 
 class Extract:

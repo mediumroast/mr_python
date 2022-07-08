@@ -5,8 +5,8 @@ __date__ = '2022-June-11'
 __copyright__ = "Copyright 2022 Mediumroast, Inc. All rights reserved."
 
 # mediumroast.io SDK specific imports
-from mr_python.api.mr_server import Auth as authenticate
-from mr_python.api.mr_server import Studies as study
+from mediumroast_py.api.mr_server import Auth as authenticate
+from mediumroast_py.api.mr_server import Studies as study
 import base_cli
 
 if __name__ == "__main__":

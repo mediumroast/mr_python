@@ -10,7 +10,7 @@ import json
 from .helpers import InteractionHelpers as interactions
 from .helpers import CompanyHelpers as companies
 from .helpers import StudyHelpers as studies
-from mr_python.helpers import utilities
+from ..helpers import utilities
 
 class Transform:
     """Perform the core transformation of input data into a proper company object.

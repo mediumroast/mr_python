@@ -7,7 +7,7 @@ sys.path.append('../')
 
 from urllib.parse import urlparse
 from urllib.parse import unquote
-from mr_python.helpers import utilities
+from ..helpers import utilities
 import re, os
 
 

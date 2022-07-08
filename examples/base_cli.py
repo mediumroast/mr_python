@@ -12,7 +12,7 @@ import json
 import configparser as conf
 
 # Perform local imports
-from mr_python.helpers import utilities
+from mediumroast_py.helpers import utilities
 
 class MrCLI:
     def __init__(self, name, description) -> None:

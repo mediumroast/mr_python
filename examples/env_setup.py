@@ -8,7 +8,7 @@ import sys
 import getpass
 import pyfiglet
 import configparser as conf
-from mr_python.helpers import utilities as util
+from mediumroast_py.helpers import utilities as util
 import pathlib as path
 
 if __name__ == '__main__':

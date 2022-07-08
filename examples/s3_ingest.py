@@ -14,23 +14,23 @@ from xmlrpc.client import boolean
 import pyfiglet
 
 # Import utilities
-from mr_python.helpers import utilities as util
+from mediumroast_py.helpers import utilities as util
 
 # Import authentication
-from mr_python.api.mr_server import Auth as authenticate
+from mediumroast_py.api.mr_server import Auth as authenticate
 
 # Import extractor
-from mr_python.extractors.s3bucket import Extract as mr_extract_s3
+from mediumroast_py.extractors.s3bucket import Extract as mr_extract_s3
 
 # Import transformers
-from mr_python.transformers.company import Transform as xform_companies
-from mr_python.transformers.study import Transform as xform_studies
-from mr_python.transformers.interaction import Transform as xform_interactions
+from mediumroast_py.transformers.company import Transform as xform_companies
+from mediumroast_py.transformers.study import Transform as xform_studies
+from mediumroast_py.transformers.interaction import Transform as xform_interactions
 
 # Import backend modules for loading
-from mr_python.api.mr_server import Companies as company
-from mr_python.api.mr_server import Interactions as interaction
-from mr_python.api.mr_server import Studies as study
+from mediumroast_py.api.mr_server import Companies as company
+from mediumroast_py.api.mr_server import Interactions as interaction
+from mediumroast_py.api.mr_server import Studies as study
 
 
 def extract_from_s3(s3_url, bucket_name="interactions"):
