@@ -1,10 +1,10 @@
 [tool.poetry]
 name = "mediumroast_py"
-version = "0.3.0"
+version = "0.3.1"
 description = "A package to perform ETL (Extract, Transform and Load) and generally interact with the mediumroast.io application."
 authors = ["Michael Hay <michael.hay@mediumroast.io>"]
 license = "Apache-2.0"
-repository = "https://github.com/mediumroast/mr_python"
+repository = "https://github.com/mediumroast/mediumroast_py"
 readme = "README.md"
 keywords = ["Product Management", "Competitive Insights", "Customer Insights", "Partner Insights", "Empowered Teams"]
 include = ["examples/*", "examples/*/*", "examples/.*/*"]
@@ -29,4 +29,4 @@ requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.urls]
-"Bug Tracker" = "https://github.com/mediumroast/mr_python/issues"
+"Bug Tracker" = "https://github.com/mediumroast/mediumroast_py/issues"

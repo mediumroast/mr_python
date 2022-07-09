@@ -120,11 +120,7 @@ $USER>~/dev/mr_python/examples$ ./interaction.py --create=./interactions_example
 ### company.py - create companies
 ```
 $USER>~/dev/mr_python/examples$ ./company.py --create=./companies_example.json
-<Response [200]>
-<Response [200]>
-<Response [200]>
-<Response [200]>
-Successfully created [4] companyobjects, exiting.
+Successfully created [4] company objects, exiting.
 ```
 
 ### company.py - get all companies
@@ -231,4 +227,62 @@ $USER>~/dev/mr_python/examples$ ./company.py
   'street_address': '1 NEW ORCHARD RD',
   'url': 'https://www.ibm.com/',
   'zip_postal': '10504'}]
+```
+
+## Step 3: Ingestion utilities
+Within the examples are ingestion utilties enabling bulk ingestion into the mediumroast.io from retained assets.  One of the utiltiies, `s3_ingest.py`, assumes that the file name includes key metadata for company, study and interaction objects.  Other utilities, as they are developed, will make less assumption about the file name structure.  
+
+### s3_ingest.py
+As in the name this utility takes metadata from an S3 bucket, transforms it into relevant objects and ingests the results in the 
+mediumroast.io application.  It keys off an object naming structure to do its magic (defined below), and is combined with the mediumroast.io SDK ETL (Extract, Transform and Load) logic for rich object definition.  A key aspect of the transformation logic
+includes what we've called rewrite rules.  These rules can act as a kind of override to discovered metadata.  The ingest utility 
+will look for rewrite rules in the `examples/rewrite_rules` directory from this distribution, but this you can set the location
+to your liking with the command line option `--rewrite_rule_dir REWRITE_RULE_DIR`.  Documentation for using the rewrite rules can be
+found in [examples/rewrite_rules/README.md]()
+
+#### Object naming structure
+This utility assumes the following structure for objects stored within an S3 bucket individual fields are separated by a dash or `-`.  One key assumption is that an object corresponds to a mediumroast.io interaction object, and the metadata is meant to enable the
+creation of associated study and company objects.
+1. Date - Definition: The date of the interaction; Format: YYYYMMDDHHMM; Example: 201402241004
+2. Region - Definition: The region where the interaction took place; Format: one of AMER, EMEA, APAC; Example: APAC
+3. Country - Definition: The country where the interaction took place; Format: N/A; Example: US
+4. State/Province - Definition: The state/province where the interaction took place; Format: N/A; Example: California
+5. City - Definition: The city where the interaction took place; Format: N/A; Example: Santa Clara
+6. Industry - Definition: The industry for the company the interaction is associated to; Format: N/A; Example: Finance
+7. Study - Definition: The study the interaction is associated to; Format: N/A; Example: Customer Insights
+8. Company - Definition: The company the interaction is associated to; Format: N/A; Example: HDS
+9. Interaction Type - Definition: The type of interaction performed; Format: N/A; Example: interview
+An example fully assembled file name is represented below.
+```
+201402241004-AMER-US-CA-SANTA CLARA-ICT-Caffeine Customer Insights-HDS-Interview.pdf
+```
+
+#### Usage information for s3_ingest.py
+```
+usage: s3_ingest [-h] [--no_intro] [--conf_file CONF_FILE] [--mr_backend_url REST_SERVER] [--api_key API_KEY] [--server_type {json,mr}] [--user USER] [--secret SECRET]
+                 [--s3_server S3_SERVER] --bucket S3_BUCKET [--access_key S3_ACCESS_KEY] [--secret_key S3_SECRET_KEY] [--rewrite_rule_dir REWRITE_RULE_DIR]
+
+Example CLI utility extracts source data from file names (stored in an S3 bucket), transforms them into Company, Study and Interaction objects, and then loads them into the mediumroast.io backend. Study, Company, and Interaction object metadata can be overwritten via the relevant files stored in "rewrite_rules/".
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --no_intro            Suppress the introductory text and get right to business.
+  --conf_file CONF_FILE
+                        Fully qualified filename for storing the configuration variables.
+  --mr_backend_url REST_SERVER
+                        The URL of the target mediumroast.io server
+  --api_key API_KEY     The API key needed to talk to the mediumroast.io server
+  --server_type {json,mr}
+                        The API key needed to talk to the backend
+  --user USER           User name
+  --secret SECRET       Secret or password
+  --s3_server S3_SERVER
+                        Using either IP or hostname the network address and port for the S3 compatible object store
+  --bucket S3_BUCKET    Define the bucket for the source data
+  --access_key S3_ACCESS_KEY
+                        S3 access key or user name
+  --secret_key S3_SECRET_KEY
+                        S3 secret key
+  --rewrite_rule_dir REWRITE_RULE_DIR
+                        The full path to the directory containing files with rewrite rules
 ```
