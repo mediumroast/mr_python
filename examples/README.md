@@ -287,3 +287,7 @@ optional arguments:
                         The full path to the directory containing files with rewrite rules
 ```
 #### Example video
+
+
+https://user-images.githubusercontent.com/10818650/178090055-d0d01ab0-8710-4033-8f31-f2863ec5bc75.mp4
+
