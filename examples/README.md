@@ -238,7 +238,7 @@ mediumroast.io application.  It keys off an object naming structure to do its ma
 includes what we've called rewrite rules.  These rules can act as a kind of override to discovered metadata.  The ingest utility 
 will look for rewrite rules in the `examples/rewrite_rules` directory from this distribution, but this you can set the location
 to your liking with the command line option `--rewrite_rule_dir REWRITE_RULE_DIR`.  Documentation for using the rewrite rules can be
-found in [examples/rewrite_rules/README.md]()
+found in [examples/rewrite_rules/README.md](https://github.com/mediumroast/mediumroast_py/tree/main/examples/rewrite_rules)
 
 #### Object naming structure
 This utility assumes the following structure for objects stored within an S3 bucket individual fields are separated by a dash or `-`.  One key assumption is that an object corresponds to a mediumroast.io interaction object, and the metadata is meant to enable the
@@ -286,3 +286,4 @@ optional arguments:
   --rewrite_rule_dir REWRITE_RULE_DIR
                         The full path to the directory containing files with rewrite rules
 ```
+#### Example video
