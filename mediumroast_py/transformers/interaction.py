@@ -70,6 +70,7 @@ class Transform:
         groups = xform.get_from_section(interaction_name, 'groups', 'groups')
         abstract = xform.get_from_section(interaction_name, 'abstracts', 'abstract')
         status = xform.get_from_section(interaction_name, 'statuses', 'status')
+        print(status)
         interaction_type = xform.get_from_section(interaction_name, 'types', 'type')
         contact_address = xform.get_from_section(interaction_name, 'contact_addresses', 'contact_address')
         contact_zip_postal = xform.get_from_section(interaction_name, 'contact_zip_postals', 'contact_zip_postal')
@@ -179,7 +180,7 @@ class Transform:
                     "region": object[self.REGION],
                     "phone": interaction_obj['contactPhone'],
                     "interaction_type": 1, # TODO this should be transformed to a string
-                    "status": interaction_obj['contactAddress'], # NOTE this is remedied as the status can range from 0 - 4
+                    "status": interaction_obj['status'], # NOTE this is remedied as the status can range from 0 - 4
                     "abstract": interaction_obj['abstract'],
                     "thumbnail": object[self.URL] # TODO this is deprecated
                     # "state": "unsummarized", # TODO the state variable is needed should be boolean associated to abstract state
