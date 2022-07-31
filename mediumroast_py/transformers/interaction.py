@@ -179,7 +179,7 @@ class Transform:
                     "region": object[self.REGION],
                     "phone": interaction_obj['contactPhone'],
                     "interaction_type": 1, # TODO this should be transformed to a string
-                    "status": self.util.get_random_status(), # NOTE this is remedied as the status can range from 0 - 4
+                    "status": interaction_obj['contactAddress'], # NOTE this is remedied as the status can range from 0 - 4
                     "abstract": interaction_obj['abstract'],
                     "thumbnail": object[self.URL] # TODO this is deprecated
                     # "state": "unsummarized", # TODO the state variable is needed should be boolean associated to abstract state
