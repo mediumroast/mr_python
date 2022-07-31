@@ -60,6 +60,7 @@ class Transform:
         # Set debug to true or false
         self.debug = debug
 
+        # TODO this is deprecated double check and remove
         # Set the rewrite behavior
         self.rewrite_policy = policy # Potential states: none, standard, extended, all we may want to implement 1 or 2 only
 
@@ -179,14 +180,14 @@ class Transform:
                     "region": object[self.REGION],
                     "phone": interaction_obj['contactPhone'],
                     "interaction_type": 1, # TODO this should be transformed to a string
-                    "status": self.util.get_random_status(), # NOTE this is remedied as the status can range from 0 - 4
+                    "status": interaction_obj['status'], # NOTE status can range from 0 - 4
                     "abstract": interaction_obj['abstract'],
                     "thumbnail": object[self.URL] # TODO this is deprecated
                     # "state": "unsummarized", # TODO the state variable is needed should be boolean associated to abstract state
                     # "linkedStudies": {study_name: study_id}, # TODO verify implementation
                     # "linkedCompanies": {company_name: company_id}, # TODO verify implementation    
                 }
-            # TODO resolve how to fix linked interactions, this isn't supported for now
+            # TODO resolve how to fix linked studies and companies, this isn't supported for now
             # else:
             #     tmp_objects[interaction_name]["linkedStudies"][study_name] = study_id
             #     tmp_objects[interaction_name]["linkedCompanies"][company_name] = company_id
