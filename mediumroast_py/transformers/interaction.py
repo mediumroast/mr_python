@@ -70,7 +70,6 @@ class Transform:
         groups = xform.get_from_section(interaction_name, 'groups', 'groups')
         abstract = xform.get_from_section(interaction_name, 'abstracts', 'abstract')
         status = xform.get_from_section(interaction_name, 'statuses', 'status')
-        print(status)
         interaction_type = xform.get_from_section(interaction_name, 'types', 'type')
         contact_address = xform.get_from_section(interaction_name, 'contact_addresses', 'contact_address')
         contact_zip_postal = xform.get_from_section(interaction_name, 'contact_zip_postals', 'contact_zip_postal')
