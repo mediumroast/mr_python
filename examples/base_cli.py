@@ -54,15 +54,6 @@ class MrCLI:
             type=str,
             dest="api_key",
         )
-        # TODO this is deprecated and should be removed in a future cleanup
-        parser.add_argument(
-            "--server_type",
-            help="The API key needed to talk to the backend",
-            type=str,
-            dest="server_type",
-            choices=['json', 'mr'],
-            default='mr'
-        )
         parser.add_argument(
             "--user", help="User name", type=str, dest="user"
         )
@@ -79,18 +70,6 @@ class MrCLI:
 
         # Gather general function oriented switches to control the behavior of the CLI
         parser.add_argument(
-            "--get_name_by_id",
-            help="Get study name by GUID",
-            type=str,
-            dest="name_by_id",
-        )
-        parser.add_argument(
-            "--get_id_by_name",
-            help="Get GUID by study name",
-            type=str,
-            dest="id_by_name",
-        )
-        parser.add_argument(
             "--get_by_id", help="Get object by ID", type=str, dest="by_id"
         )
         parser.add_argument(
@@ -100,7 +79,7 @@ class MrCLI:
             "--get_by_name", help="Get object by name", type=str, dest="by_name"
         )
         parser.add_argument(
-            "--create", help="Add an object to the backend by specifying a JSON file", type=str, dest="json_obj"
+            "--create", help="Add objects to the backend by specifying a JSON file", type=str, dest="json_obj"
         )
         parser.add_argument(
             "--update", help="Update an object from the backend by specifying the object's id and value to update in JSON", type=str, dest="update_obj"
@@ -143,8 +122,6 @@ class MrCLI:
             'user': None,
             'secret': None,
             'api_key': None,
-            # TODO this is deprecated and should be removed in a future cleanup
-            'server_type': None
         }
 
         # Now set the environment up in the priority as documented above
@@ -152,8 +129,6 @@ class MrCLI:
         env['user'] = cli_args.user if cli_args.user else config['DEFAULT']['user']
         env['secret'] = cli_args.secret if cli_args.secret else config['DEFAULT']['secret']
         env['api_key'] = cli_args.api_key if cli_args.api_key else config['DEFAULT']['api_key']
-        # TODO this is deprecated and should be removed in a future cleanup
-        env['server_type'] = cli_args.server_type if cli_args.server_type else config['DEFAULT']['server_type']
 
         return True, {"status_code": "SUCCEEDED"}, env
 
