@@ -46,6 +46,7 @@ class Transform:
         self.RAW_COMPANY_NAME = 7
         self.RAW_STUDY_NAME = 6
         self.RAW_DATE = 0
+        self.INTERACTION_TYPE = 8
         self.REGION = 1
         self.COUNTRY = 2
         self.STATE_PROVINCE = 3
@@ -178,18 +179,15 @@ class Transform:
                     "country": object[self.COUNTRY],
                     "region": object[self.REGION],
                     "phone": interaction_obj['contactPhone'],
-                    "interaction_type": 1, # TODO this should be transformed to a string
+                    "interaction_type": object[self.INTERACTION_TYPE], 
                     "status": interaction_obj['status'], # NOTE this is remedied as the status can range from 0 - 4
                     "abstract": interaction_obj['abstract'],
-                    "thumbnail": object[self.URL] # TODO this is deprecated
-                    # "state": "unsummarized", # TODO the state variable is needed should be boolean associated to abstract state
-                    # "linkedStudies": {study_name: study_id}, # TODO verify implementation
-                    # "linkedCompanies": {company_name: company_id}, # TODO verify implementation    
+                    "linked_studies": {study_name: study_id}, # TODO verify implementation
+                    "linked_companies": {company_name: company_id}, # TODO verify implementation    
                 }
-            # TODO resolve how to fix linked interactions, this isn't supported for now
-            # else:
-            #     tmp_objects[interaction_name]["linkedStudies"][study_name] = study_id
-            #     tmp_objects[interaction_name]["linkedCompanies"][company_name] = company_id
+            else:
+                tmp_objects[interaction_name]["linkedStudies"][study_name] = study_id
+                tmp_objects[interaction_name]["linkedCompanies"][company_name] = company_id
 
         for interaction in tmp_objects.keys():
 
