@@ -42,7 +42,6 @@ Verifying the current environmental settings...
                  user = rflores
                  secret = [suppressed]
                  api_key = [suppressed]
-                 server_type = mr
                  working_dir = /tmp
 Are these environmental settings correct? [Y/n] 
 
@@ -58,7 +57,6 @@ rest_server = http://mr-02:6767
 user = rflores
 secret = [Suppressed]
 api_key = [Suppressed]
-server_type = mr
 working_dir = /tmp
 
 [s3_credentials]
@@ -85,7 +83,7 @@ Since all CLI implementations are largely tne same what follows is an example of
 ### company.py - usage
 ```
 $USER>~/dev/mr_python/examples$ ./company.py --help
-usage: company [-h] [--conf_file CONF_FILE] [--rest_url REST_SERVER] [--api_key API_KEY] [--server_type {json,mr}] [--user USER]
+usage: company [-h] [--conf_file CONF_FILE] [--rest_url REST_SERVER] [--api_key API_KEY] [--user USER]
                [--secret SECRET] [--pretty_output] [--get_name_by_id NAME_BY_ID] [--get_id_by_name ID_BY_NAME] [--get_by_id BY_ID]
                [--get_by_x BY_X] [--get_by_name BY_NAME] [--create JSON_OBJ] [--update UPDATE_OBJ] [--delete OBJ_ID]
 

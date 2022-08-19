@@ -54,7 +54,6 @@ if __name__ == '__main__':
         'user': 'Your mediumroast.io user name, default [',
         'secret': 'The password for your user name: ',
         'api_key': 'The API key for the mediumroast.io server: ',
-        'server_type': 'Define the server type for the mediumroast.io backend, default [',
         'working_dir': 'Specify the working directory for the CLI, default ['
     }
 
@@ -87,11 +86,6 @@ if __name__ == '__main__':
     # Process the api_key
     item = 'api_key'
     answer = getpass.getpass(env[item]).strip()
-    config[section][item] = answer if answer else config[section][item]
-
-    # Process the server_type
-    item = 'server_type'
-    answer = input(env[item] + config.get(section, item) + ']: ').strip()
     config[section][item] = answer if answer else config[section][item]
 
     # Process the working_dir

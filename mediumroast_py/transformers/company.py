@@ -33,13 +33,6 @@ class Transform:
     be updated when ready.)  These company objects can then be iterated over and ingested into the backend.  
     Finally, if the 'debug' argument is set to True then this transformation class will print out every object prior to returning -- the default value of 'debug' is false.  This output is extremely useful if you're making modifications
     to the transformation and need to debug the results with an external tool like Postman.
-
-    Future work:
-
-    There is a requirement to implement 'linked_studies" and 'linked_interactions' attributes for
-    the company objects.  This depends on the backend implementation and may be more complex that the initial 
-    implementation with the 'json_server'.  There are some breadcrumbs and notes in the comments for this linking process
-    within the transformation code.
     """
 
     def __init__(self, rewrite_rule_dir, debug=False):
