@@ -150,7 +150,6 @@ class Transform:
                 'minute': int(interaction_time[2:3])
             }
             interaction_date_time = self.util.get_iso_datetime(date_data=my_time)
-
             # TODO the date needs to be fixed potentially with the helper functions included
             if tmp_objects.get(interaction_name) == None:
                 long_lat = self.util.locate(

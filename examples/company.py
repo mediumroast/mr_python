@@ -26,8 +26,7 @@ if __name__ == "__main__":
         user=my_cli.env['user'], 
         secret=my_cli.env['secret'], 
         rest_server=my_cli.env['rest_server'],
-        api_key=my_cli.env['api_key'],
-        server_type=my_cli.env['server_type']
+        api_key=my_cli.env['api_key']
     )
     credential = auth_ctl.login()
 
