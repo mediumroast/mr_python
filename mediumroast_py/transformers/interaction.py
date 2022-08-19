@@ -33,19 +33,13 @@ class Transform:
     be updated when ready.)  These interaction objects can then be iterated over and ingested into the backend.  
     Finally, if the 'debug' argument is set to True then this transformation class will print out every object prior to returning -- the default value of 'debug' is false.  This output is extremely useful if you're making modifications
     to the transformation and need to debug the results with an external tool like Postman.
-
-    Future work:
-
-    There is a requirement to implement 'linked_studies" and 'linked_companies' attributes for
-    the interaction objects.  This depends on the backend implementation and may be more complex that the initial 
-    implementation with the 'json_server'.  There are some breadcrumbs and notes in the comments for this linking process
-    within the transformation code.
     """
 
     def __init__(self, rewrite_rule_dir, policy='standard', debug=False):
         self.RAW_COMPANY_NAME = 7
         self.RAW_STUDY_NAME = 6
         self.RAW_DATE = 0
+        self.INTERACTION_TYPE = 8
         self.REGION = 1
         self.COUNTRY = 2
         self.STATE_PROVINCE = 3
@@ -150,7 +144,6 @@ class Transform:
                 'minute': int(interaction_time[2:3])
             }
             interaction_date_time = self.util.get_iso_datetime(date_data=my_time)
-
             # TODO the date needs to be fixed potentially with the helper functions included
             if tmp_objects.get(interaction_name) == None:
                 long_lat = self.util.locate(
@@ -179,18 +172,27 @@ class Transform:
                     "country": object[self.COUNTRY],
                     "region": object[self.REGION],
                     "phone": interaction_obj['contactPhone'],
+<<<<<<< HEAD
+                    "interaction_type": object[self.INTERACTION_TYPE], 
+                    "status": interaction_obj['status'], # NOTE this is remedied as the status can range from 0 - 4
+=======
                     "interaction_type": 1, # TODO this should be transformed to a string
                     "status": interaction_obj['status'], # NOTE status can range from 0 - 4
+>>>>>>> 36b80435e69f1ff2079d32d1a734bd35e7ef4a01
                     "abstract": interaction_obj['abstract'],
-                    "thumbnail": object[self.URL] # TODO this is deprecated
-                    # "state": "unsummarized", # TODO the state variable is needed should be boolean associated to abstract state
-                    # "linkedStudies": {study_name: study_id}, # TODO verify implementation
-                    # "linkedCompanies": {company_name: company_id}, # TODO verify implementation    
+                    "linked_studies": {study_name: study_id}, # TODO verify implementation
+                    "linked_companies": {company_name: company_id}, # TODO verify implementation    
                 }
+<<<<<<< HEAD
+            else:
+                tmp_objects[interaction_name]["linkedStudies"][study_name] = study_id
+                tmp_objects[interaction_name]["linkedCompanies"][company_name] = company_id
+=======
             # TODO resolve how to fix linked studies and companies, this isn't supported for now
             # else:
             #     tmp_objects[interaction_name]["linkedStudies"][study_name] = study_id
             #     tmp_objects[interaction_name]["linkedCompanies"][company_name] = company_id
+>>>>>>> 36b80435e69f1ff2079d32d1a734bd35e7ef4a01
 
         for interaction in tmp_objects.keys():
 

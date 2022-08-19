@@ -10,10 +10,9 @@ import requests
 class mr_rest:
     """Simple and safe wrappers around Python requests to make RESTful API calls simpler.
 
-    The credential object, passed when this object is created, should includ all relevant items
+    The credential object, passed when this object is created, should include all relevant items
     needed to authenticate a client.  This can include appropriate JWT tokens, user identifiers,
-    passwords, etc.  At a minimum the rest_url is needed for a json_server backend, but when there
-    is a mr_server backend then both rest_url and an api_key are needed to connect.
+    passwords, etc.  At a minimum the rest_url and an api_key are needed to connect.
     """
 
     def __init__(self, credential):
@@ -28,7 +27,6 @@ class mr_rest:
         Otherwise, if the request fails a boolean status of False, the status code and status message is returned.
         """
         # Extract key items from the credential and extend with endpoint
-        server_type = self.CRED['server_type']
         url = self.CRED['rest_server'] + endpoint
         api_key = self.CRED['api_key']
 
@@ -52,14 +50,15 @@ class mr_rest:
         Otherwise, if the request fails a boolean status of False, the status code and status message is returned.
         """
         # Extract key items from the credential and extend with endpoint
-        server_type = self.CRED['server_type']
         url = self.CRED['rest_server'] + endpoint
         api_key = self.CRED['api_key']
 
         # Try to make the request
         try:  
             # Detect if the backend server type is either a mr_server or json_server
-            resp_obj = requests.post(url, headers={'Authorization': api_key}, json=obj) if server_type == "mr" else requests.post(url, json=obj)
+            # TODO check to see if we do or do not need the API key for posts
+            resp_obj = requests.post(url, headers={'Authorization': api_key}, json=obj)
+            # resp_obj = requests.post(url, json=obj)
             resp_obj.raise_for_status()
 
         # If the request fails then return the error and False

@@ -1,5 +1,5 @@
 #!/bin/env python3
-__version__ = '1.0'
+__version__ = '1.1'
 __author__ = "Michael Hay"
 __date__ = '2022-June-11'
 __copyright__ = "Copyright 2022 Mediumroast, Inc. All rights reserved."
@@ -50,17 +50,16 @@ if __name__ == '__main__':
 
     # Environmentals and their prompt text for inputs
     env = {
-        'rest_server': 'IP address or host name of mediumroast.io server, default [', 
+        'mediumroast_server': 'IP address or host name of mediumroast.io server, default [',
+        'mediumroast_port': 'TCP port used for the mediumroast.io server, default [', 
         'user': 'Your mediumroast.io user name, default [',
         'secret': 'The password for your user name: ',
         'api_key': 'The API key for the mediumroast.io server: ',
-        'server_type': 'Define the server type for the mediumroast.io backend, default [',
         'working_dir': 'Specify the working directory for the CLI, default ['
     }
 
-    # Helper strings for the rest_server
+    # Helper strings for the mediumroast_server
     proto = 'http://'
-    port = ':6767'
 
     # Section for storing the environment variables
     section = 'DEFAULT'
@@ -69,10 +68,17 @@ if __name__ == '__main__':
     answer = None
 
     print('Setting up the environment for mediumroast.io...')
-    # Process the rest_server name
-    item = 'rest_server'
+    # Process the rest_server name & port to create the mediumroast_server setting
+    item = 'mediumroast_server'
     answer = input(env[item] + config.get(section, item) + ']: ').strip()
-    config[section][item] = proto + answer + port if answer else config[section][item]
+    mr_server = answer if answer else config[section][item]
+
+    item = 'mediumroast_port'
+    answer = input(env[item] + config.get(section, item) + ']: ').strip()
+    mr_port = answer if answer else config[section][item]
+
+    item = 'rest_server'
+    config[section][item] = proto + mr_server + ':' + mr_port
 
     # Process the user name
     item = 'user'
@@ -87,11 +93,6 @@ if __name__ == '__main__':
     # Process the api_key
     item = 'api_key'
     answer = getpass.getpass(env[item]).strip()
-    config[section][item] = answer if answer else config[section][item]
-
-    # Process the server_type
-    item = 'server_type'
-    answer = input(env[item] + config.get(section, item) + ']: ').strip()
     config[section][item] = answer if answer else config[section][item]
 
     # Process the working_dir

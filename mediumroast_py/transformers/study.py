@@ -122,6 +122,11 @@ class Transform:
             # Capture the right company_name and then fetch the study's ID
             company_name = company_xform.get_name(object[self.RAW_COMPANY_NAME])
             company_id = company_xform.make_uid(company_name)
+
+            # Capture the right study_name and then fetch the study's ID
+            interaction_name = interaction_xform.get_name(
+                object[self.RAW_DATE], study_obj['name'], company_name)
+            interaction_id = interaction_xform.make_uid(interaction_name)
             
 
             if tmp_objects.get (object[self.RAW_STUDY_NAME]) == None:
@@ -129,6 +134,7 @@ class Transform:
                     "study_name": study_obj['name'], # TODO This will change to name in a future backend version
                     "description": study_obj['description'],
                     "linked_companies": {company_name: company_id}, # TODO discussion how we should do linked_companies
+                    "linked_interactions": {interaction_name: interaction_id}, # TODO discussion how we should do linked_companies
                     # "substudies": study_obj['substudies'], # TODO discuss the substudies implementation and correct
                     "document": study_xform.get_document(study_obj['name']),
                     "public": study_obj['public'],
@@ -137,6 +143,7 @@ class Transform:
                 }
             else:
                 tmp_objects[object[self.RAW_STUDY_NAME]]["linked_companies"][company_name] = company_id
+                tmp_objects[object[self.RAW_STUDY_NAME]]["linked_interactions"][interaction_name] = interaction_id
 
         for study in tmp_objects.keys():
             # In case we're debugging print out each object

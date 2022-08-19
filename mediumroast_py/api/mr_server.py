@@ -9,16 +9,14 @@ from . scaffold import mr_rest
 from ..helpers import utilities
 
 class Auth:
-    def __init__(self, rest_server, user, secret, api_key, server_type="mr"):
+    def __init__(self, rest_server, user, secret, api_key):
         self.REST_SERVER = rest_server
-        self.SERVER_TYPE = server_type
         self.USER = user
         self.SECRET = secret
         self.API_KEY = api_key
 
     def login(self):
         return {
-            "server_type": self.SERVER_TYPE,
             "user": self.USER,
             "secret": self.SECRET,
             "rest_server": self.REST_SERVER,
@@ -31,7 +29,7 @@ class Auth:
 class BaseObjects:
     def __init__(self, credential, obj_type, api_version='v1'):
         self.CRED = credential
-        self.rest = mr_rest(credential) # NOTE the class in rest_scaffold might need some work
+        self.rest = mr_rest(credential)
         self.util = utilities()
         self.OBJ_TYPE = obj_type
         self.API_VERSION = api_version

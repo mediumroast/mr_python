@@ -6,12 +6,12 @@ __copyright__ = "Copyright 2022 Mediumroast, Inc. All rights reserved."
 
 # mediumroast.io SDK specific imports
 from mediumroast_py.api.mr_server import Auth as authenticate
-from mediumroast_py.api.mr_server import Interactions as interaction
+from mediumroast_py.api.mr_server import Companies as company
 import base_cli
 
 if __name__ == "__main__":
     #define the object type for the CLI
-    object_type = 'interaction'
+    object_type = 'company'
 
     # Instantiate the base CLI object
     my_cli = base_cli.MrCLI(
@@ -26,13 +26,12 @@ if __name__ == "__main__":
         user=my_cli.env['user'], 
         secret=my_cli.env['secret'], 
         rest_server=my_cli.env['rest_server'],
-        api_key=my_cli.env['api_key'],
-        server_type=my_cli.env['server_type']
+        api_key=my_cli.env['api_key']
     )
     credential = auth_ctl.login()
 
     # Create the API controller
-    api_ctl = interaction(credential)
+    api_ctl = company(credential)
 
     # Run the CLI
     my_cli.run_cli(api_ctl, object_type)

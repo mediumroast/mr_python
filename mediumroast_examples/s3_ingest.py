@@ -135,14 +135,6 @@ def parse_cli_args(
         dest="api_key",
     )
     parser.add_argument(
-        "--server_type",
-        help="The API key needed to talk to the backend",
-        type=str,
-        dest="server_type",
-        choices=['json', 'mr'],
-        default='mr'
-    )
-    parser.add_argument(
         "--user", help="User name", type=str, dest="user"
     )
     parser.add_argument(
@@ -213,7 +205,6 @@ def set_env(cli_args, config):
         env['user'] = cli_args.user if cli_args.user else config['DEFAULT']['user']
         env['secret'] = cli_args.secret if cli_args.secret else config['DEFAULT']['secret']
         env['api_key'] = cli_args.api_key if cli_args.api_key else config['DEFAULT']['api_key']
-        env['server_type'] = cli_args.server_type if cli_args.server_type else config['DEFAULT']['server_type']
         env['s3_server'] = cli_args.s3_server if cli_args.s3_server else config['s3_settings']['server']
         env['s3_access_key'] = cli_args.s3_access_key if cli_args.s3_access_key else config['s3_settings']['user']
         env['s3_secret_key'] = cli_args.s3_secret_key if cli_args.s3_secret_key else config['s3_settings']['api_key']
@@ -242,8 +233,7 @@ if __name__ == "__main__":
         user=my_env['user'], 
         secret=my_env['secret'], 
         rest_server=my_env['rest_server'],
-        api_key=my_env['api_key'],
-        server_type=my_env['server_type']
+        api_key=my_env['api_key']
     )
     credential = auth_ctl.login()
 

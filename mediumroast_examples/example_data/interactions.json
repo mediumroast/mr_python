@@ -23,9 +23,10 @@
         "country":"N/A",
         "region":"N/A",
         "phone":"N/A",
-        "interaction_type":1,
+        "interaction_type": "foo",
         "status":2,
         "abstract":"I wish I wasn't so harry.",
-        "thumbnail":"https://this.is.a.thumbnail"
+        "linked_companies": {"a company name": "A value"},
+        "linked_studies": {"a study name": "A value"}
     }
 ]
