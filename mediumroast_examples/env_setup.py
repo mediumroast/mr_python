@@ -78,7 +78,7 @@ if __name__ == '__main__':
     mr_port = answer if answer else config[section][item]
 
     item = 'rest_server'
-    config[section][item] = proto + mr_server + mr_port
+    config[section][item] = proto + mr_server + ':' + mr_port
 
     # Process the user name
     item = 'user'
