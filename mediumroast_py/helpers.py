@@ -100,6 +100,7 @@ class utilities:
 
         return True, {"status_code": "SUCCEEDED"}, config
 
+    # TODO This can be removed from this set of functions as it isn't required here
     def log_it(self, body='', function='MAIN', log_type='START'):
         """This is a very simple standin logger, ideally we will revert back to logging at some point
         """
