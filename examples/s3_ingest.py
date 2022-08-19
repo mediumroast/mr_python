@@ -282,7 +282,6 @@ if __name__ == "__main__":
                 else: print('x', end='')
             elif obj_type == 'interactions':
                 [success, msg, resp] = interaction_api_ctl.create_obj(obj_inst)
-                print(obj_inst)
                 if success: print('o', end='')
                 else: print('x', end='')
             elif obj_type == 'studies':
