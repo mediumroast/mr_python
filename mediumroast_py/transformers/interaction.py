@@ -172,28 +172,21 @@ class Transform:
                     "country": object[self.COUNTRY],
                     "region": object[self.REGION],
                     "phone": interaction_obj['contactPhone'],
-<<<<<<< HEAD
                     "interaction_type": object[self.INTERACTION_TYPE], 
                     "status": interaction_obj['status'], # NOTE this is remedied as the status can range from 0 - 4
-=======
                     "interaction_type": 1, # TODO this should be transformed to a string
                     "status": interaction_obj['status'], # NOTE status can range from 0 - 4
->>>>>>> 36b80435e69f1ff2079d32d1a734bd35e7ef4a01
                     "abstract": interaction_obj['abstract'],
                     "linked_studies": {study_name: study_id}, # TODO verify implementation
                     "linked_companies": {company_name: company_id}, # TODO verify implementation    
                 }
-<<<<<<< HEAD
             else:
                 tmp_objects[interaction_name]["linkedStudies"][study_name] = study_id
                 tmp_objects[interaction_name]["linkedCompanies"][company_name] = company_id
-=======
             # TODO resolve how to fix linked studies and companies, this isn't supported for now
             # else:
             #     tmp_objects[interaction_name]["linkedStudies"][study_name] = study_id
             #     tmp_objects[interaction_name]["linkedCompanies"][company_name] = company_id
->>>>>>> 36b80435e69f1ff2079d32d1a734bd35e7ef4a01
-
         for interaction in tmp_objects.keys():
 
             # In case we're debugging print out each object
