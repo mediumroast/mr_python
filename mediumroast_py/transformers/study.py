@@ -131,7 +131,7 @@ class Transform:
 
             if tmp_objects.get (object[self.RAW_STUDY_NAME]) == None:
                 tmp_objects[object[self.RAW_STUDY_NAME]] = {
-                    "study_name": study_obj['name'], # TODO This will change to name in a future backend version
+                    "name": study_obj['name'], # TODO This will change to name in a future backend version
                     "description": study_obj['description'],
                     "linked_companies": {company_name: company_id}, # TODO discussion how we should do linked_companies
                     "linked_interactions": {interaction_name: interaction_id}, # TODO discussion how we should do linked_companies
