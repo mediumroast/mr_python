@@ -38,20 +38,20 @@ class BaseObjects:
         full_endpoint = '/' + '/'.join([self.API_VERSION, self.OBJ_TYPE, endpoint])
         return self.rest.get_obj(full_endpoint)
 
-    def get_by_name(self, name, endpoint='getbyx'):
+    def get_by_name(self, name, endpoint='findbyx'):
         full_endpoint = '/' + '/'.join([self.API_VERSION, self.OBJ_TYPE, endpoint])
-        my_obj = {'getByX': 'name', 'xEquals': name}
-        return self.rest.get_obj(full_endpoint, my_obj)
+        my_obj = {'findbyx': 'name', 'xEquals': name}
+        return self.rest.post_obj(full_endpoint, my_obj)
 
-    def get_by_id(self, id, endpoint='getbyx'):
+    def get_by_id(self, id, endpoint='findbyx'):
         full_endpoint = '/' + '/'.join([self.API_VERSION, self.OBJ_TYPE, endpoint])
-        my_obj = {'getByX': 'id', 'xEquals': id}
-        return self.rest.get_obj(full_endpoint, my_obj)
+        my_obj = {'findbyx': 'id', 'xEquals': id}
+        return self.rest.post_obj(full_endpoint, my_obj)
 
-    def get_by_x(self, attribute, value, endpoint='getbyx'):
+    def get_by_x(self, attribute, value, endpoint='findbyx'):
         full_endpoint = '/' + '/'.join([self.API_VERSION, self.OBJ_TYPE, endpoint])
-        my_obj = {'getByX': attribute, 'xEquals': value} 
-        return self.rest.get_obj(full_endpoint, my_obj)
+        my_obj = {'findbyx': attribute, 'xEquals': value} 
+        return self.rest.post_obj(full_endpoint, my_obj)
 
     def create_obj(self, obj, endpoint='register'):
         full_endpoint = '/' + '/'.join([self.API_VERSION, self.OBJ_TYPE, endpoint])
