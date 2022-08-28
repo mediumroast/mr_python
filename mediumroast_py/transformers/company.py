@@ -164,17 +164,15 @@ class Transform:
                     "recent10k_url": company_obj['recent10kURL'],
                     "recent10q_url": company_obj['recent10qURL'],
                     "zip_postal": company_obj['zipPostal'],
-                    "linked_studies": {study_name: study_id}, # TODO discuss the policy and approach to updated linked_X
-                    "linked_interactions": {interaction_name: interaction_id}, # TODO discuss the policy and approach to updated linked_X
+                    "linked_studies": {study_name: study_id}, 
+                    "linked_interactions": {interaction_name: interaction_id},
                     "longitude": long_lat[0],
                     "latitude": long_lat[1],
                     "document": company_xform.get_document(company_obj['name']),
                 }
             else:
-                tmp_objects[object[self.RAW_COMPANY_NAME]
-                            ]["linked_studies"][study_name] = study_id
-                tmp_objects[object[self.RAW_COMPANY_NAME]
-                            ]["linked_interactions"][interaction_name] = interaction_id
+                tmp_objects[object[self.RAW_COMPANY_NAME]]["linked_studies"][study_name] = study_id
+                tmp_objects[object[self.RAW_COMPANY_NAME]]["linked_interactions"][interaction_name] = interaction_id
 
         for company in tmp_objects.keys():
             # In case we're debugging print out each object

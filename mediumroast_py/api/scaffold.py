@@ -55,10 +55,7 @@ class mr_rest:
 
         # Try to make the request
         try:  
-            # Detect if the backend server type is either a mr_server or json_server
-            # TODO check to see if we do or do not need the API key for posts
             resp_obj = requests.post(url, headers={'Authorization': api_key}, json=obj)
-            # resp_obj = requests.post(url, json=obj)
             resp_obj.raise_for_status()
 
         # If the request fails then return the error and False
