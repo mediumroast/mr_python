@@ -178,16 +178,8 @@ class Transform:
                     "linked_studies": {study_name: study_id},
                     "linked_companies": {company_name: company_id},
                     "topics": {
-                        1: {
-                            "words": {"word 1": 1, "word 2": 2},
-                            "score": 1234,
-                            "description": "This is a description"
-                        },
-                        2: {
-                            "words": {"word 1": 1, "word 2": 2},
-                            "score": 1234,
-                            "description": "This is a description"
-                        }
+                        "some words": 10.0,
+                        "more words": 1.1
                     }   
                 }
             else:
