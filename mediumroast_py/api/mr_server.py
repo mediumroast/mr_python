@@ -40,17 +40,17 @@ class BaseObjects:
     def find_by_name(self, name, endpoint='findbyx'):
         full_endpoint = '/' + '/'.join([self.API_VERSION, self.OBJ_TYPE, endpoint])
         my_obj = {'findByX': 'name', 'xEquals': name}
-        return self.rest.post_obj(full_endpoint, my_obj)
+        return self.rest.post_obj(full_endpoint, my_obj, return_json=True)
 
     def find_by_id(self, id, endpoint='findbyx'):
         full_endpoint = '/' + '/'.join([self.API_VERSION, self.OBJ_TYPE, endpoint])
         my_obj = {'findByX': 'id', 'xEquals': id}
-        return self.rest.post_obj(full_endpoint, my_obj)
+        return self.rest.post_obj(full_endpoint, my_obj, return_json=True)
 
     def find_by_x(self, attribute, value, endpoint='findbyx'):
         full_endpoint = '/' + '/'.join([self.API_VERSION, self.OBJ_TYPE, endpoint])
         my_obj = {'findByX': attribute, 'xEquals': value} 
-        return self.rest.post_obj(full_endpoint, my_obj)
+        return self.rest.post_obj(full_endpoint, my_obj, return_json=True)
 
     def create_obj(self, obj, endpoint='register'):
         full_endpoint = '/' + '/'.join([self.API_VERSION, self.OBJ_TYPE, endpoint])

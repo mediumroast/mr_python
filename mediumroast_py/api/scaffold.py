@@ -43,7 +43,7 @@ class mr_rest:
         # Return True, status code and resulting json
         return True, {"status_code": resp_obj.status_code}, resp_obj.json()
 
-    def post_obj(self, endpoint, obj):
+    def post_obj(self, endpoint, obj, return_json=False):
         """Put an object using endpoint and a pythonic object.
 
         If the request succeeds a boolean status of True, the status code and the JSON is returned.
@@ -62,8 +62,11 @@ class mr_rest:
         except requests.exceptions.HTTPError as err:  
             return False, {"status_code": resp_obj.status_code, "message": err}, None
         
-        # Return True, status code and resulting json
-        return True, {"status_code": resp_obj.status_code}, resp_obj.json()
+        # Return True, status code and resulting json if needed
+        if return_json:
+            return True, {"status_code": resp_obj.status_code}, resp_obj.json()
+        else:
+            return True, {"status_code": resp_obj.status_code}, resp_obj
 
    
     def delete_obj(self, endpoint, obj):
