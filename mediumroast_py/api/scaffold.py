@@ -63,7 +63,7 @@ class mr_rest:
             return False, {"status_code": resp_obj.status_code, "message": err}, None
         
         # Return True, status code and resulting json
-        return True, {"status_code": resp_obj.status_code}, resp_obj
+        return True, {"status_code": resp_obj.status_code}, resp_obj.json()
 
    
     def delete_obj(self, endpoint, obj):
