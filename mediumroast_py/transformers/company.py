@@ -176,9 +176,7 @@ class Transform:
                     "comparison": {
                         "Company 1": 1.0,
                         "Company 2": 10.1
-                    },
-                    "summary": "Unknown",
-                    "abstract": "Unknown"
+                    }
                 }
             else:
                 tmp_objects[object[self.RAW_COMPANY_NAME]]["linked_studies"][study_name] = study_id
