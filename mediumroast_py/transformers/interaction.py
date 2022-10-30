@@ -149,7 +149,7 @@ class Transform:
                 long_lat = self.util.locate(
                     object[self.CITY] + ',' + object[self.STATE_PROVINCE] + ',' + object[self.COUNTRY])
                 tmp_objects[interaction_name] = {
-                    "creator_id":1, # TODO it is a bug if this is required
+                    "creator_id": 1, # TODO it is a bug if this is required
                     "owner_id": 1, # TODO it is a bug if this is required
                     "name": interaction_name,
                     "description": interaction_xform.get_description(study_name, company_name),
@@ -177,10 +177,7 @@ class Transform:
                     "abstract": interaction_obj['abstract'],
                     "linked_studies": {study_name: study_id},
                     "linked_companies": {company_name: company_id},
-                    "topics": {
-                        "some words": 10.0,
-                        "more words": 1.1
-                    }   
+                    "topics": {}
                 }
             else:
                 tmp_objects[interaction_name]["linkedStudies"][study_name] = study_id
