@@ -177,7 +177,13 @@ class Transform:
                     "abstract": interaction_obj['abstract'],
                     "linked_studies": {study_name: study_id},
                     "linked_companies": {company_name: company_id},
-                    "topics": {}
+                    "topics": {},
+                    "file_size": "Unknown",
+                    "word_count": "Unknown",
+                    "reading_time": "Unknown",
+                    "page_count": "Unknown",
+                    "content_type": "Unknown"
+
                 }
             else:
                 tmp_objects[interaction_name]["linkedStudies"][study_name] = study_id
