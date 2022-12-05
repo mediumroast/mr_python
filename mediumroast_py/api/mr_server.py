@@ -19,7 +19,7 @@ class Auth:
             "user": self.USER,
             "secret": self.SECRET,
             "rest_server": self.REST_SERVER,
-            "api_key": self.API_KEY
+            "api_key": 'Bearer ' + self.API_KEY
         }
 
     def logout(self):

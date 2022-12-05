@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "mediumroast_py"
-version = "0.3.32"
+version = "0.3.33"
 description = "A package to perform ETL (Extract, Transform and Load) and  interact with the mediumroast.io application."
 authors = ["Michael Hay <michael.hay@mediumroast.io>"]
 license = "Apache-2.0"
