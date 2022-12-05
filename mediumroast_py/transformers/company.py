@@ -78,7 +78,7 @@ class Transform:
         logo = xform.get_from_section(company_name, 'logos', 'logo')
         logo_url = logo
 
-        return {'name': company_name,
+        return {'name': name,
                 'role': role,
                 'industry': industry,
                 'description': description,
@@ -151,7 +151,6 @@ class Transform:
                     "role": company_obj['role'],
                     "url": company_obj['url'],
                     "logo_url": company_obj['logo_url'],
-                    "icon": company_obj['logo_url'], # TODO this is deprecated
                     "street_address": company_obj['streetAddress'],
                     "city": object[self.CITY] if company_obj['city'] == 'Unknown' else company_obj['city'],
                     "state_province": object[self.STATE_PROVINCE] if company_obj['stateProvince'] == 'Unknown' else company_obj['stateProvince'],
@@ -164,17 +163,28 @@ class Transform:
                     "recent10k_url": company_obj['recent10kURL'],
                     "recent10q_url": company_obj['recent10qURL'],
                     "zip_postal": company_obj['zipPostal'],
-                    "linked_studies": {study_name: study_id}, # TODO discuss the policy and approach to updated linked_X
-                    "linked_interactions": {interaction_name: interaction_id}, # TODO discuss the policy and approach to updated linked_X
+                    "linked_studies": {study_name: study_id}, 
+                    "linked_interactions": {interaction_name: interaction_id},
                     "longitude": long_lat[0],
                     "latitude": long_lat[1],
-                    "document": company_xform.get_document(company_obj['name']),
+                    "topics": {},
+                    "comparison": {},
+                    # TODO these should be updated in rewrite rules for now setting to a default of Unknown
+                    "wikipedia_url": 'Unknown',
+                    "sic": 'Unknown',
+                    "sic_description": 'Unknown',
+                    "company_type": 'Unknown',
+                    "firmographics_url": 'Unknown',
+                    "filings_url": 'Unknown',
+                    "owner_transactions": 'Unknown',
+                    "google_maps_url": 'Unknown',
+                    "google_news_url": 'Unknown',
+                    "google_finance_url": 'Unknown',
+                    "google_patents_url": 'Unknown'
                 }
             else:
-                tmp_objects[object[self.RAW_COMPANY_NAME]
-                            ]["linked_studies"][study_name] = study_id
-                tmp_objects[object[self.RAW_COMPANY_NAME]
-                            ]["linked_interactions"][interaction_name] = interaction_id
+                tmp_objects[object[self.RAW_COMPANY_NAME]]["linked_studies"][study_name] = study_id
+                tmp_objects[object[self.RAW_COMPANY_NAME]]["linked_interactions"][interaction_name] = interaction_id
 
         for company in tmp_objects.keys():
             # In case we're debugging print out each object

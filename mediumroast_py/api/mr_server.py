@@ -1,9 +1,8 @@
 __version__ = '1.0'
 __author__ = "Michael Hay"
-__date__ = '2022-June-11'
+__date__ = '2022-September-04'
 __copyright__ = "Copyright 2022 Mediumroast, Inc. All rights reserved."
 
-# TODO Remove server_type from implementation since it is deprecated
 
 from . scaffold import mr_rest
 from ..helpers import utilities
@@ -38,20 +37,20 @@ class BaseObjects:
         full_endpoint = '/' + '/'.join([self.API_VERSION, self.OBJ_TYPE, endpoint])
         return self.rest.get_obj(full_endpoint)
 
-    def get_by_name(self, name, endpoint='getbyx'):
+    def find_by_name(self, name, endpoint='findbyx'):
         full_endpoint = '/' + '/'.join([self.API_VERSION, self.OBJ_TYPE, endpoint])
-        my_obj = {'getByX': 'name', 'xEquals': name}
-        return self.rest.get_obj(full_endpoint, my_obj)
+        my_obj = {'findByX': 'name', 'xEquals': name}
+        return self.rest.post_obj(full_endpoint, my_obj, return_json=True)
 
-    def get_by_id(self, id, endpoint='getbyx'):
+    def find_by_id(self, id, endpoint='findbyx'):
         full_endpoint = '/' + '/'.join([self.API_VERSION, self.OBJ_TYPE, endpoint])
-        my_obj = {'getByX': 'id', 'xEquals': id}
-        return self.rest.get_obj(full_endpoint, my_obj)
+        my_obj = {'findByX': 'id', 'xEquals': id}
+        return self.rest.post_obj(full_endpoint, my_obj, return_json=True)
 
-    def get_by_x(self, attribute, value, endpoint='getbyx'):
+    def find_by_x(self, attribute, value, endpoint='findbyx'):
         full_endpoint = '/' + '/'.join([self.API_VERSION, self.OBJ_TYPE, endpoint])
-        my_obj = {'getByX': attribute, 'xEquals': value} 
-        return self.rest.get_obj(full_endpoint, my_obj)
+        my_obj = {'findByX': attribute, 'xEquals': value} 
+        return self.rest.post_obj(full_endpoint, my_obj, return_json=True)
 
     def create_obj(self, obj, endpoint='register'):
         full_endpoint = '/' + '/'.join([self.API_VERSION, self.OBJ_TYPE, endpoint])

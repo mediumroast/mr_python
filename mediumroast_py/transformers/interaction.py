@@ -149,7 +149,7 @@ class Transform:
                 long_lat = self.util.locate(
                     object[self.CITY] + ',' + object[self.STATE_PROVINCE] + ',' + object[self.COUNTRY])
                 tmp_objects[interaction_name] = {
-                    "creator_id":1, # TODO it is a bug if this is required
+                    "creator_id": 1, # TODO it is a bug if this is required
                     "owner_id": 1, # TODO it is a bug if this is required
                     "name": interaction_name,
                     "description": interaction_xform.get_description(study_name, company_name),
@@ -172,28 +172,24 @@ class Transform:
                     "country": object[self.COUNTRY],
                     "region": object[self.REGION],
                     "phone": interaction_obj['contactPhone'],
-<<<<<<< HEAD
                     "interaction_type": object[self.INTERACTION_TYPE], 
-                    "status": interaction_obj['status'], # NOTE this is remedied as the status can range from 0 - 4
-=======
-                    "interaction_type": 1, # TODO this should be transformed to a string
-                    "status": interaction_obj['status'], # NOTE status can range from 0 - 4
->>>>>>> 36b80435e69f1ff2079d32d1a734bd35e7ef4a01
+                    "status": interaction_obj['status'], 
                     "abstract": interaction_obj['abstract'],
-                    "linked_studies": {study_name: study_id}, # TODO verify implementation
-                    "linked_companies": {company_name: company_id}, # TODO verify implementation    
+                    "linked_studies": {study_name: study_id},
+                    "linked_companies": {company_name: company_id},
+                    "topics": {},
+                    "file_size": "Unknown",
+                    "word_count": "Unknown",
+                    "reading_time": "Unknown",
+                    "page_count": "Unknown",
+                    "content_type": "Unknown"
+
                 }
-<<<<<<< HEAD
             else:
                 tmp_objects[interaction_name]["linkedStudies"][study_name] = study_id
                 tmp_objects[interaction_name]["linkedCompanies"][company_name] = company_id
-=======
-            # TODO resolve how to fix linked studies and companies, this isn't supported for now
-            # else:
-            #     tmp_objects[interaction_name]["linkedStudies"][study_name] = study_id
-            #     tmp_objects[interaction_name]["linkedCompanies"][company_name] = company_id
->>>>>>> 36b80435e69f1ff2079d32d1a734bd35e7ef4a01
-
+        
+        # Finalize the objects for return back to the calling program
         for interaction in tmp_objects.keys():
 
             # In case we're debugging print out each object
@@ -202,4 +198,5 @@ class Transform:
             # Add the object to the final set dict
             final_objects['interactions'].append(tmp_objects[interaction])
 
+        # Return the final objects
         return final_objects
