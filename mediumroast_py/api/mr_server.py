@@ -5,7 +5,6 @@ __copyright__ = "Copyright 2022 Mediumroast, Inc. All rights reserved."
 
 
 from . scaffold import mr_rest
-from ..helpers import utilities
 
 class Auth:
     def __init__(self, rest_server, user, secret, api_key):
@@ -29,7 +28,7 @@ class BaseObjects:
     def __init__(self, credential, obj_type, api_version='v1'):
         self.CRED = credential
         self.rest = mr_rest(credential)
-        self.util = utilities()
+        self.util = None
         self.OBJ_TYPE = obj_type
         self.API_VERSION = api_version
 
