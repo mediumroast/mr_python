@@ -8,7 +8,7 @@ __email__ = "hello@mediumroast.io"
 __status__ = "Production"
 
 
-class baseObjects:
+class BaseGitHubObject:
     """
     A base class for interacting with objects stored in GitHub.
 
@@ -24,7 +24,7 @@ class baseObjects:
     """
     def __init__(self, token, org, process_name, obj_type):
         """
-        Initialize a new instance of the baseObjects class.
+        Initialize a new instance of the BaseGitHubObject class.
 
         Parameters
         ----------
@@ -203,11 +203,11 @@ class baseObjects:
         return self.server_ctl.check_for_lock(self.obj_type)
 
 
-class Studies(baseObjects):
+class Studies(BaseGitHubObject):
     """
-    A subclass of baseObjects for interacting with study objects stored in GitHub.
+    A subclass of BaseGitHubObject for interacting with study objects stored in GitHub.
 
-    This class inherits all methods from the baseObjects class and can be used
+    This class inherits all methods from the BaseGitHubObject class and can be used
     to retrieve and manipulate study objects stored in a GitHub repository.
 
     Attributes
@@ -233,11 +233,11 @@ class Studies(baseObjects):
         super().__init__(token, org, process_name, 'Studies')
 
 
-class Users(baseObjects):
+class Users(BaseGitHubObject):
     """
-    A subclass of baseObjects for interacting with user objects stored in GitHub.
+    A subclass of BaseGitHubObject for interacting with user objects stored in GitHub.
 
-    This class inherits all methods from the baseObjects class and can be used
+    This class inherits all methods from the BaseGitHubObject class and can be used
     to retrieve and manipulate user objects stored in a GitHub repository.
 
     Attributes
@@ -323,11 +323,11 @@ class Users(baseObjects):
         return [True, f"SUCCESS: found all users where {attribute} = {value}", my_users]
 
 
-class Billings(baseObjects):
+class Billings(BaseGitHubObject):
     """
-    A subclass of baseObjects for interacting with billing objects stored in GitHub.
+    A subclass of BaseGitHubObject for interacting with billing objects stored in GitHub.
 
-    This class inherits all methods from the baseObjects class and can be used
+    This class inherits all methods from the BaseGitHubObject class and can be used
     to retrieve and manipulate billing objects stored in a GitHub repository.
 
     Attributes
@@ -406,11 +406,11 @@ class Billings(baseObjects):
         return self.server_ctl.get_storage_billings()
 
 
-class Companies(baseObjects):
+class Companies(BaseGitHubObject):
     """
-    A subclass of baseObjects for interacting with company objects stored in GitHub.
+    A subclass of BaseGitHubObject for interacting with company objects stored in GitHub.
 
-    This class inherits all methods from the baseObjects class and can be used
+    This class inherits all methods from the BaseGitHubObject class and can be used
     to retrieve and manipulate company objects stored in a GitHub repository.
 
     Attributes
@@ -488,7 +488,7 @@ class Companies(baseObjects):
             'to': ['Interactions']
         }
 
-        # If allow_orphans is true then use the baseObjects delete_obj
+        # If allow_orphans is true then use the BaseGitHubObject delete_obj
         if allow_orphans:
             return super().delete_obj(obj_name, source)
 
@@ -536,11 +536,11 @@ class Companies(baseObjects):
         # Return the response
         return [True, {'status_code': 200, 'status_msg': f'deleted company [{obj_name}] and all linked interactions'}, None]
 
-class Interactions(baseObjects):
+class Interactions(BaseGitHubObject):
     """
-    A subclass of baseObjects for interacting with interaction objects stored in GitHub.
+    A subclass of BaseGitHubObject for interacting with interaction objects stored in GitHub.
 
-    This class inherits all methods from the baseObjects class and can be used
+    This class inherits all methods from the BaseGitHubObject class and can be used
     to retrieve and manipulate interaction objects stored in a GitHub repository.
 
     Attributes

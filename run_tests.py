@@ -1,4 +1,6 @@
 import unittest
+import os
+from dotenv import load_dotenv
 
 class CustomTestResult(unittest.TextTestResult):
     def addSuccess(self, test):
@@ -12,6 +14,9 @@ class CustomTestResult(unittest.TextTestResult):
         self.printErrorList('FAIL', self.failures)
 
 def main():
+    # Load environment variables
+    load_dotenv()
+
     # Create a TestSuite
     suite = unittest.TestSuite()
 
