@@ -129,3 +129,14 @@ dmypy.json
 .pyre/
 
 .DS*
+
+# data
+data/
+data/*
+!data/.gitkeep
+
+# secrets
+secrets/
+secrets/*
+!secrets/.gitkeep
+*.pem

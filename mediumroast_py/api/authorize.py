@@ -3,6 +3,7 @@ import time
 import webbrowser
 import jwt
 from pathlib import Path
+from urllib.parse import parse_qs
 
 __license__ = "Apache 2.0"
 __copyright__ = "Copyright (C) 2024 Mediumroast, Inc."
@@ -63,32 +64,38 @@ class GitHubAuth:
         # Request device and user codes
         response = requests.post('https://github.com/login/device/code', data={
             'client_id': self.client_id,
-            'scope': 'repo'
+            # 'scope': 'repo'
         })
         response.raise_for_status()
-        data = response.json()
+        data = parse_qs(response.content.decode())
 
         # Open the verification URL in the user's browser
-        webbrowser.open(data['verification_uri'])
-
-        print(f"Enter the user code: {data['user_code']}")
+        print(f"Opening browser with: {data['verification_uri'][0]}")
+        webbrowser.open(data['verification_uri'][0])
+        print(f"Enter the user code: {data['user_code'][0]}")
+        input("Press Enter after you have input the code to continue.")
 
         # Poll for the access token
         while True:
             response = requests.post('https://github.com/login/oauth/access_token', data={
                 'client_id': self.client_id,
-                'device_code': data['device_code'],
+                'device_code': data['device_code'][0],
                 'grant_type': 'urn:ietf:params:oauth:grant-type:device_code'
             })
             response.raise_for_status()
-            token_data = response.json()
+            token_data = parse_qs(response.content.decode())
 
             if 'access_token' in token_data:
                 # Assume the token expires in 1 hour
-                expires_at = time.time() + 3600
-                return {'token': token_data['access_token'], 'expires_at': expires_at, 'auth_type': 'device-flow'}
-            elif 'error' in token_data and token_data['error'] == 'authorization_pending':
-                time.sleep(data['interval'])
+                expires_at = time.time() + int(token_data['expires_in'][0])
+                return {
+                    'token': token_data['access_token'][0], 
+                    'refresh_token': token_data['refresh_token'][0],
+                    'expires_at': expires_at, 
+                    'auth_type': 'device-flow'
+                }
+            elif 'error' in token_data and token_data['error'][0] == 'authorization_pending':
+                time.sleep(data['interval'][0])
             else:
                 raise Exception(f"Failed to get access token: {token_data}")
 
@@ -106,6 +113,7 @@ class GitHubAuth:
         str
             The PAT.
         """
+        return [False, f'initial implementation completed but unconfirmed, untested and unsupported', None]
         with open(pat_file_path, 'r') as file:
             pat = file.read().strip()
         # Set the expiration time to a far future date
@@ -190,3 +198,4 @@ class GitHubAuth:
                 raise ValueError(f"Unknown auth type: {token_info['auth_type']}")
 
         return token_info
+    

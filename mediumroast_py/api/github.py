@@ -100,6 +100,7 @@ class GitHubFunctions:
         list
             A list containing a boolean indicating success or failure, a status message, and the user's raw data (or the error message in case of failure).
         """
+        return [False, f'initial port completed but implementation unconfirmed, untested and unsupported', None]
         try:
             user = self.github_instance.get_user()
             return [True, 'SUCCESS: able to capture current user info', user.raw_data]
@@ -115,6 +116,7 @@ class GitHubFunctions:
         list
             A list containing a boolean indicating success or failure, a status message, and a list of users' raw data (or the error message in case of failure).
         """
+        return [False, f'initial port completed but implementation unconfirmed, untested and unsupported', None]
         try:
             repo = self.github_instance.get_repo(f"{self.org_name}/{self.repo_name}")
             collaborators = repo.get_collaborators()
@@ -133,6 +135,7 @@ class GitHubFunctions:
         list
             A list containing a boolean indicating success or failure, and the newly created repository's raw data (or the error message in case of failure).
         """
+        return [False, f'initial port completed but implementation unconfirmed, untested and unsupported', None]
         try:
             org = self.github_instance.get_organization(self.org_name)
             repo = org.create_repo(self.repo_name, description=self.repo_desc, private=True)
@@ -149,6 +152,7 @@ class GitHubFunctions:
         list
             A list containing a boolean indicating success or failure, a status message, and the actions billings information as a dictionary (or the error message in case of failure).
         """
+        return [False, f'initial port completed but implementation unconfirmed, untested and unsupported', None]
         try:
             url = f"https://api.github.com/orgs/{self.org_name}/settings/billing/actions"
             response = requests.get(url, auth=HTTPBasicAuth(self.username, self.token))
@@ -169,6 +173,7 @@ class GitHubFunctions:
         list
             A list containing a boolean indicating success or failure, a status message, and the storage billings information as a dictionary (or the error message in case of failure).
         """
+        return [False, f'initial port completed but implementation unconfirmed, untested and unsupported', None]
         try:
             url = f"https://api.github.com/orgs/{self.org_name}/settings/billing/shared-storage"
             response = requests.get(url, auth=HTTPBasicAuth(self.username, self.token))
@@ -345,6 +350,7 @@ class GitHubFunctions:
         list
             A list containing a boolean indicating success or failure, a status message, and the delete response's raw data (or the error message in case of failure).
         """
+        return [False, f'initial port completed but implementation unconfirmed, untested and unsupported', None]
         try:
             repo = self.github_instance.get_repo(f"{self.org_name}/{self.repo_name}")
             file_path = f"{container_name}/{file_name}"
@@ -376,6 +382,7 @@ class GitHubFunctions:
         list
             A list containing a boolean indicating success or failure, a status message, and the write response's raw data (or the error message in case of failure).
         """
+        return [False, f'initial port completed but implementation unconfirmed, untested and unsupported', None]
         try:
             repo = self.github_instance.get_repo(f"{self.org_name}/{self.repo_name}")
             file_path = f"{container_name}/{file_name}"
@@ -489,6 +496,7 @@ class GitHubFunctions:
         list
             A list containing a boolean indicating success or failure, a status message, and the delete response's raw data (or the error message in case of failure).
         """
+        return [False, f'initial port completed but implementation unconfirmed, untested and unsupported', None]
         try:
             repo = self.github_instance.get_repo(f"{self.org_name}/{self.repo_name}")
             file_path = f"{container_name}/{file_name}"
@@ -512,6 +520,7 @@ class GitHubFunctions:
         list
             A list containing a boolean indicating success or failure, and a list of responses for each container creation (or the error message in case of failure).
         """
+        return [False, f'initial port completed but implementation unconfirmed, untested and unsupported', None]
         responses = []
         empty_json = base64.b64encode(json.dumps([]).encode()).decode()
         for container_name in containers:
