@@ -85,12 +85,12 @@ class BaseGitHubObject:
         dict
             The object with the specified attribute value, or None if no such object exists.
         """
-        if attribute == 'name':
-            value = value.lower()
+        # if attribute == 'name':
+        #     value = value.lower()
         my_objects = []
         if all_objects is None:
             all_objects_resp = self.server_ctl.read_objects(self.obj_type)
-            all_objects = all_objects_resp[2]['mrJson']
+            all_objects = all_objects_resp[2]
         if len(all_objects) == 0:
             return [False, f"No {self.obj_type} objects found"]
         for obj in all_objects:
@@ -639,3 +639,28 @@ class Interactions(BaseGitHubObject):
             The interaction object with the specified file hash, or None if no such object exists.
         """
         return self.find_by_x('file_hash', hash)
+    
+    def download_interaction_content(self, interaction_name):
+        """
+        Download the file associated with an interaction object.
+
+        This method uses the server_ctl attribute to call the download_interaction_file method.
+
+        Parameters
+        ----------
+        interaction_name : str
+            The name of the interaction object.
+
+        Returns
+        -------
+        dict
+            The file associated with the interaction object.
+        """
+        interaction_response = self.find_by_name(interaction_name)
+        if not interaction_response[0]:
+            return interaction_response
+        else:
+            interaction = interaction_response[1][0]
+            file_url = interaction['url']
+            file_contents = self.server_ctl.read_blob(file_url, 'main')
+            return file_contents

@@ -360,6 +360,35 @@ class GitHubFunctions:
         except Exception as e:
             return [False, { 'status_code': 503, 'status_msg': f'unable to delete object [{file_name}] from container [{container_name}]' }, str(e)]
 
+    def read_blob(self, file_name, branch_name='main', sha=None):
+        """
+        Read a blob (file) from a container (directory) in a specific branch.
+
+        Parameters
+        ----------
+        container_name : str
+            The name of the container from which to read the blob.
+        file_name : str
+            The name of the blob to read.
+        branch_name : str
+            The name of the branch where the blob is located.
+        sha : str, optional
+            The SHA of the blob to read.
+
+        Returns
+        -------
+        list
+            A list containing a boolean indicating success or failure, a status message, and the blob's raw data (or the error message in case of failure).
+        """
+        try:
+            repo = self.github_instance.get_repo(f"{self.org_name}/{self.repo_name}")
+            file_path = f"{file_name}"
+            file_contents = repo.get_contents(file_path, ref=branch_name)
+            decoded_content = base64.b64decode(file_contents.content)
+            return [True, f"SUCCESS: read object [{file_name}] from container [{file_name}]", decoded_content]
+        except Exception as e:
+            return [False, f"ERROR: unable to read object [{file_name}].", str(e)] 
+    
     def write_blob(self, container_name, file_name, blob, branch_name, sha=None):
         """
         Write a blob (file) to a container (directory) in a specific branch.
