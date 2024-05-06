@@ -594,7 +594,7 @@ class Interactions(BaseGitHubObject):
         white_list = [
             'status', 'content_type', 'file_size', 'reading_time', 'word_count', 'page_count', 'description', 'abstract',
             'region', 'country', 'city', 'state_province', 'zip_postal', 'street_address', 'latitude', 'longitude',
-            'public', 'groups'
+            'public', 'groups', 'topics', 'tags'
         ]
 
         return super().update_obj(name, key, value, dont_write, system, white_list)

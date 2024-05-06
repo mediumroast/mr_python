@@ -479,7 +479,7 @@ class GitHubFunctions:
         except Exception as e:
             return [False, f"ERROR: unable to read objects from container [{container_name}]", str(e)]
     
-    def update_object(self, container_name, obj, ref, my_sha):
+    def update_object(self, container_name, obj, ref):
         """
         Update an object in a container in a specific branch.
 
