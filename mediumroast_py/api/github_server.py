@@ -92,11 +92,11 @@ class BaseGitHubObject:
             all_objects_resp = self.server_ctl.read_objects(self.obj_type)
             all_objects = all_objects_resp[2]
         if len(all_objects) == 0:
-            return [False, f"No {self.obj_type} objects found"]
+            return [False, f"No {self.obj_type} objects found", None]
         for obj in all_objects:
             if obj.get(attribute) == value:
                 my_objects.append(obj)
-        return [True, my_objects]
+        return [True, {'status_code': 200, 'status_msg': 'found objects matching {attribute} = {value}'}, my_objects]
 
     def create_obj(self, objs):
         """
@@ -122,7 +122,7 @@ class BaseGitHubObject:
             return released
         return [True, {'status_code': 200, 'status_msg': f"created [{len(objs)}] {self.obj_type}"}, None]
 
-    def update_obj(self, obj_name, key, value, dont_write=False, system=False, white_list=None):
+    def update_obj(self, obj_name, key=None, value=None, updates=None, dont_write=False, system=False, white_list=None):
         """
         Update an object in the GitHub repository.
 
@@ -146,7 +146,16 @@ class BaseGitHubObject:
         list
             A list containing a boolean indicating success or failure, and a status message.
         """
-        return self.server_ctl.update_object(self.obj_type, obj_name, key, value, dont_write, system, white_list)
+        return self.server_ctl.update_object(
+            self.obj_type, 
+            obj_name, 
+            key=key, 
+            value=value, 
+            updates=updates,
+            dont_write=dont_write, 
+            system=system, 
+            white_list=white_list
+        )
 
     def delete_obj(self, obj_name, source, repo_metadata=None, catch_it=True):
         """
@@ -565,7 +574,7 @@ class Interactions(BaseGitHubObject):
         """
         super().__init__(token, org, process_name, 'Interactions')
 
-    def update_obj(self, obj_to_update, dont_write=False, system=False):
+    def update_obj(self, obj_updates, dont_write=False, system=False):
         """
         Update an interaction object in the GitHub repository.
 
@@ -586,18 +595,27 @@ class Interactions(BaseGitHubObject):
             The updated interaction object.
         """
         # Destructure obj_to_update
-        name = obj_to_update['name']
-        key = obj_to_update['key']
-        value = obj_to_update['value']
+        name = obj_updates['name']
+        key = obj_updates['key'] if 'key' in obj_updates else None
+        value = obj_updates['value'] if 'value' in obj_updates else None
+        updates = obj_updates['updates'] if 'updates' in obj_updates else None
 
         # Define the attributes that can be updated by the user
         white_list = [
             'status', 'content_type', 'file_size', 'reading_time', 'word_count', 'page_count', 'description', 'abstract',
             'region', 'country', 'city', 'state_province', 'zip_postal', 'street_address', 'latitude', 'longitude',
-            'public', 'groups'
+            'public', 'groups', 'contact_name', 'topics'
         ]
 
-        return super().update_obj(name, key, value, dont_write, system, white_list)
+        return super().update_obj(
+            name, 
+            key=key, 
+            value=value, 
+            updates=updates,
+            dont_write=dont_write, 
+            system=system, 
+            white_list=white_list
+        )
 
     def delete_obj(self, obj_name):
         """
@@ -640,7 +658,8 @@ class Interactions(BaseGitHubObject):
         """
         return self.find_by_x('file_hash', hash)
     
-    def download_interaction_content(self, interaction_name):
+    def download_interaction_content(self, interaction_path):
+        
         """
         Download the file associated with an interaction object.
 
@@ -656,11 +675,5 @@ class Interactions(BaseGitHubObject):
         dict
             The file associated with the interaction object.
         """
-        interaction_response = self.find_by_name(interaction_name)
-        if not interaction_response[0]:
-            return interaction_response
-        else:
-            interaction = interaction_response[1][0]
-            file_url = interaction['url']
-            file_contents = self.server_ctl.read_blob(file_url, 'main')
-            return file_contents
+        file_contents = self.server_ctl.read_blob(interaction_path)
+        return file_contents

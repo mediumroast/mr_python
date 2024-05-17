@@ -2,6 +2,7 @@ import unittest
 import os
 import base64
 import hashlib
+import json
 from unittest.mock import patch, MagicMock
 from mediumroast_py.api.authorize import GitHubAuth
 from mediumroast_py.api.github import GitHubFunctions
@@ -24,8 +25,13 @@ class TestGitHubAuth(unittest.TestCase):
         print(test_separator)
         print('Setting pem authorization for tests...')
         global token_info
-        auth = GitHubAuth(env={'clientId': os.getenv('MR_CLIENT_ID')})
-        token_info = auth.get_access_token_pem(os.getenv('YOUR_PEM_FILE'), os.getenv('MR_APP_ID'), os.getenv('YOUR_INSTALLATION_ID'))
+        auth = GitHubAuth(env={
+            'clientId': os.getenv('MR_CLIENT_ID'), 
+            'appId': os.getenv('MR_APP_ID'),
+            'installationId': os.getenv('YOUR_INSTALLATION_ID'),
+            'secretFile': os.getenv('YOUR_PEM_FILE')
+        })
+        token_info = auth.get_access_token_pem()
         print(f"Access token from pem authorization: {token_info['token']}")
         
         print('Test setup complete, starting tests.')
@@ -97,7 +103,6 @@ class TestGitHubAuth(unittest.TestCase):
         print('Test Interactions: download_interaction_content')
         print(separator)
 
-        
         api_ctl = Interactions(token_info['token'], os.getenv('YOUR_ORG') , process_name)
         interactions = api_ctl.get_all()
         example_interaction = interactions[2][0]
@@ -108,7 +113,7 @@ class TestGitHubAuth(unittest.TestCase):
         }
         mock_post.return_value = MagicMock()
         mock_post.return_value.json.return_value = example_response
-        interaction = api_ctl.download_interaction_content(example_interaction['name'])
+        interaction = api_ctl.download_interaction_content(example_interaction['url'])
         self.assertEqual(interaction[0], example_response['result'])
 
         # Compute the SHA265 hash of the downloaded file which is in interaction[2]
@@ -122,6 +127,72 @@ class TestGitHubAuth(unittest.TestCase):
         print(f"Expected hash: {example_response['hash']}")
         print(f"Resulting hash: {computed_hash}")
         print(test_separator)
+
+    @patch('requests.post')
+    def test_update_interaction(self, mock_post):
+        
+        print('Test Interactions: update_interaction')
+        print(separator)
+
+        api_ctl = Interactions(token_info['token'], os.getenv('YOUR_ORG') , process_name)
+
+        # Read in updated interaction content from example_data/*.json
+        updates = [
+            './tests/example_data/confluence_vs_sharepoint_metadata_update.json', 
+            './tests/example_data/team_q1_2024_shareholder_letter_metadata_update.json'
+        ]
+
+        # Read in the updated interaction content into an array of dictionaries
+        updated_content = []
+        for update in updates:
+            with open(update, 'r') as f:
+                # Append the content of the file to the updated_content array as a dictionary using json.loads
+                updated_content.append(json.loads(f.read()))
+
+        # Modify each dictionary to include only name, status, abstract, description and topics properties and delete the other properties
+        for content in updated_content:
+            for key in list(content.keys()):
+                if key not in ['name', 'status', 'abstract', 'description', 'topics', 'file_size', 'reading_time', 'page_count', 'content_type', 'word_count', 'contact_name']:
+                    del content[key]
+
+        # Update each interaction with the updated content
+        for content in updated_content:
+            # Set the interaction name to the name of the interaction to update
+            interaction_name = content['name']
+            # Delete the name property from the content dictionary
+            del content['name']
+            # Create the content dictionary to send to the update_obj function
+            content = {'name': interaction_name, 'updates': content}
+            example_response = {
+                'result': True,
+                'message': 'SUCCESS: updated object in container [Interactions]'
+            }
+            mock_post.return_value = MagicMock()
+            mock_post.return_value.json.return_value = example_response
+            update = api_ctl.update_obj(content)
+            print(update)
+            self.assertEqual(update[0], example_response['result'])
+            print('Checking to see if sample interaction was upated ...')
+            interaction_to_check = updated_content[0]['name']
+            expected_status = updated_content[0]['status']
+            expected_description = updated_content[0]['description']
+            expected_abstract = updated_content[0]['abstract']
+
+            # Get the interaction that was updated
+            updated_interaction = api_ctl.find_by_name(interaction_to_check)
+            print(f"Interaction to check: {interaction_to_check}")
+            self.assertEqual(updated_interaction[0]['status'], expected_status)
+            print(f"Expected status: {expected_status}")
+            print(f"Resulting status: {updated_interaction[0]['status']}")
+            self.assertEqual(updated_interaction[0]['description'], expected_description)
+            print(f"Expected description: {expected_description}")
+            print(f"Resulting description: {updated_interaction[0]['description']}")
+            self.assertEqual(updated_interaction[0]['abstract'], expected_abstract)
+            print(f"Expected abstract: {expected_abstract}")
+            print(f"Resulting abstract: {updated_interaction[0]['abstract']}")
+            print(test_separator)
+
+
 
 
 

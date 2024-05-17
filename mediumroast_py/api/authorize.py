@@ -47,6 +47,9 @@ class GitHubAuth:
         self.env = env
         self.client_type = client_type
         self.client_id = env['clientId']
+        self.app_id = env['appId']
+        self.installation_id = env['installationId']
+        self.secret_file = env['secretFile']
         self.device_code = None
 
     def get_access_token_device_flow(self):
@@ -63,8 +66,7 @@ class GitHubAuth:
         """
         # Request device and user codes
         response = requests.post('https://github.com/login/device/code', data={
-            'client_id': self.client_id,
-            # 'scope': 'repo'
+            'client_id': self.client_id
         })
         response.raise_for_status()
         data = parse_qs(response.content.decode())
@@ -121,18 +123,9 @@ class GitHubAuth:
 
         return {'token': pat, 'expires_at': expires_at, 'auth_type': 'pat'}
 
-    def get_access_token_pem(self, pem_file_path, app_id, installation_id):
+    def get_access_token_pem(self):
         """
         Get an installation access token using a PEM file.
-
-        Parameters
-        ----------
-        pem_file_path : str
-            The path to the PEM file.
-        app_id : str
-            The App ID.
-        installation_id : str
-            The installation ID.
 
         Returns
         -------
@@ -140,7 +133,7 @@ class GitHubAuth:
             The installation access token.
         """
         # Load the private key
-        private_key = Path(pem_file_path).read_text()
+        private_key = Path(self.secret_file).read_text()
 
         # Generate the JWT
         payload = {
@@ -149,7 +142,7 @@ class GitHubAuth:
             # JWT expiration time (10 minute maximum)
             'exp': int(time.time()) + (10 * 60),
             # GitHub App's identifier
-            'iss': app_id
+            'iss': self.app_id
         }
         jwt_token = jwt.encode(payload, private_key, algorithm='RS256')
 
@@ -161,7 +154,7 @@ class GitHubAuth:
 
         # Make the request to generate the installation access token
         response = requests.post(
-            f'https://api.github.com/app/installations/{installation_id}/access_tokens', headers=headers)
+            f'https://api.github.com/app/installations/{self.installation_id}/access_tokens', headers=headers)
         response.raise_for_status()
 
         # Extract the token and its expiration time from the response
@@ -170,6 +163,51 @@ class GitHubAuth:
         expires_at = token_data['expires_at']
 
         return {'token': token, 'expires_at': expires_at, 'auth_type': 'pem'}
+    
+
+    def get_access_token_client_secret(self, client_id, client_secret):
+        """
+        Get an access token using a client secret.
+
+        Parameters
+        ----------
+        client_secret : str
+            The client secret.
+        client_id : str
+            The client ID.
+
+        Returns
+        -------
+        dict
+            A dictionary containing the access token and its expiration time.
+        """
+        return [False, f'initial implementation completed but unconfirmed, untested and unsupported', None]
+        # The URL of the token endpoint
+        url = "https://github.com/login/oauth/access_token"
+
+        # The data to send in the POST request
+        data = {
+            "client_id": client_id,
+            "client_secret": client_secret,
+            "code": "authorization_code",  # Replace with your actual authorization code
+        }
+
+        # Make the POST request
+        response = requests.post(url, data=data)
+
+        # Check the response
+        if response.status_code == 200:
+            # Parse the response as JSON
+            token_info = response.json()
+
+            # Return the access token and its expiration time
+            return {
+                "access_token": token_info["access_token"],
+                "expires_in": token_info["expires_in"],
+            }
+        else:
+            # If the request failed, raise an exception
+            response.raise_for_status()
 
     def check_and_refresh_token(self, token_info):
         """
