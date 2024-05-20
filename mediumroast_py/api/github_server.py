@@ -85,16 +85,14 @@ class BaseGitHubObject:
         dict
             The object with the specified attribute value, or None if no such object exists.
         """
-        # if attribute == 'name':
-        #     value = value.lower()
         my_objects = []
         if all_objects is None:
             all_objects_resp = self.server_ctl.read_objects(self.obj_type)
             all_objects = all_objects_resp[2]
         if len(all_objects) == 0:
             return [False, f"No {self.obj_type} objects found", None]
-        for obj in all_objects:
-            if obj.get(attribute) == value:
+        for obj in all_objects['mr_json']:
+            if obj[attribute] == value:
                 my_objects.append(obj)
         return [True, {'status_code': 200, 'status_msg': 'found objects matching {attribute} = {value}'}, my_objects]
 
@@ -122,7 +120,7 @@ class BaseGitHubObject:
             return released
         return [True, {'status_code': 200, 'status_msg': f"created [{len(objs)}] {self.obj_type}"}, None]
 
-    def update_obj(self, obj_name, key=None, value=None, updates=None, dont_write=False, system=False, white_list=None):
+    def update_obj(self, updates=None, dont_write=False, system=False, white_list=None):
         """
         Update an object in the GitHub repository.
 
@@ -148,9 +146,6 @@ class BaseGitHubObject:
         """
         return self.server_ctl.update_object(
             self.obj_type, 
-            obj_name, 
-            key=key, 
-            value=value, 
             updates=updates,
             dont_write=dont_write, 
             system=system, 
@@ -574,7 +569,7 @@ class Interactions(BaseGitHubObject):
         """
         super().__init__(token, org, process_name, 'Interactions')
 
-    def update_obj(self, obj_updates, dont_write=False, system=False):
+    def update_obj(self, updates, dont_write=False, system=False):
         """
         Update an interaction object in the GitHub repository.
 
@@ -594,23 +589,14 @@ class Interactions(BaseGitHubObject):
         dict
             The updated interaction object.
         """
-        # Destructure obj_to_update
-        name = obj_updates['name']
-        key = obj_updates['key'] if 'key' in obj_updates else None
-        value = obj_updates['value'] if 'value' in obj_updates else None
-        updates = obj_updates['updates'] if 'updates' in obj_updates else None
-
         # Define the attributes that can be updated by the user
         white_list = [
             'status', 'content_type', 'file_size', 'reading_time', 'word_count', 'page_count', 'description', 'abstract',
             'region', 'country', 'city', 'state_province', 'zip_postal', 'street_address', 'latitude', 'longitude',
-            'public', 'groups', 'contact_name', 'topics'
+            'public', 'groups', 'contact_name', 'topics', 'tags'
         ]
 
         return super().update_obj(
-            name, 
-            key=key, 
-            value=value, 
             updates=updates,
             dont_write=dont_write, 
             system=system, 

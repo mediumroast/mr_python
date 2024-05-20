@@ -72,7 +72,7 @@ class TestGitHubAuth(unittest.TestCase):
         companies = api_ctl.get_all()
         self.assertEqual(companies[0], example_response['result'])
         print('Example company:')
-        pprint(companies[2][0])
+        pprint(companies[2]['mr_json'][0])
         print(test_separator)
 
     @patch('requests.post')
@@ -93,7 +93,7 @@ class TestGitHubAuth(unittest.TestCase):
         self.assertEqual(interactions[0], example_response['result'])
         print('Example Interaction:')
         global example_interaction
-        example_interaction = interactions[2][0]
+        example_interaction = interactions[2]['mr_json'][0]
         pprint(example_interaction)
         print(test_separator)
 
@@ -105,7 +105,7 @@ class TestGitHubAuth(unittest.TestCase):
 
         api_ctl = Interactions(token_info['token'], os.getenv('YOUR_ORG') , process_name)
         interactions = api_ctl.get_all()
-        example_interaction = interactions[2][0]
+        example_interaction = interactions[2]['mr_json'][0]
         example_response = {
             'result': True,
             'hash': example_interaction['file_hash'],
@@ -152,45 +152,49 @@ class TestGitHubAuth(unittest.TestCase):
         # Modify each dictionary to include only name, status, abstract, description and topics properties and delete the other properties
         for content in updated_content:
             for key in list(content.keys()):
-                if key not in ['name', 'status', 'abstract', 'description', 'topics', 'file_size', 'reading_time', 'page_count', 'content_type', 'word_count', 'contact_name']:
+                if key not in ['name', 'status', 'abstract', 'description', 'topics', 'file_size', 'reading_time', 'page_count', 'content_type', 'word_count', 'contact_name', 'tags']:
                     del content[key]
 
         # Update each interaction with the updated content
+        # TODO: Structure updates into a dictionary with the name of the interaction as the key and the content as the value, then iterate over the dictionary to update each interaction in update_obj.
+        content_to_update = dict()
         for content in updated_content:
             # Set the interaction name to the name of the interaction to update
             interaction_name = content['name']
             # Delete the name property from the content dictionary
             del content['name']
             # Create the content dictionary to send to the update_obj function
-            content = {'name': interaction_name, 'updates': content}
-            example_response = {
-                'result': True,
-                'message': 'SUCCESS: updated object in container [Interactions]'
-            }
-            mock_post.return_value = MagicMock()
-            mock_post.return_value.json.return_value = example_response
-            update = api_ctl.update_obj(content)
-            print(update)
-            self.assertEqual(update[0], example_response['result'])
-            print('Checking to see if sample interaction was upated ...')
-            interaction_to_check = updated_content[0]['name']
-            expected_status = updated_content[0]['status']
-            expected_description = updated_content[0]['description']
-            expected_abstract = updated_content[0]['abstract']
+            content_to_update[interaction_name] = content
+        
+        example_response = {
+            'result': True,
+            'message': 'SUCCESS: updated object in container [Interactions]'
+        }
+        mock_post.return_value = MagicMock()
+        mock_post.return_value.json.return_value = example_response
+        update = api_ctl.update_obj(content_to_update)
+        self.assertEqual(update[0], example_response['result'])
+        print('Checking to see if sample interaction was updated ...')
+        # Get the key of the first updated interaction
+        interaction_keys = list(content_to_update.keys())
+        interaction_to_check = interaction_keys[0]
+        expected_status = content_to_update[interaction_to_check]['status']
+        expected_description = content_to_update[interaction_to_check]['description']
+        expected_abstract = content_to_update[interaction_to_check]['abstract']
 
-            # Get the interaction that was updated
-            updated_interaction = api_ctl.find_by_name(interaction_to_check)
-            print(f"Interaction to check: {interaction_to_check}")
-            self.assertEqual(updated_interaction[0]['status'], expected_status)
-            print(f"Expected status: {expected_status}")
-            print(f"Resulting status: {updated_interaction[0]['status']}")
-            self.assertEqual(updated_interaction[0]['description'], expected_description)
-            print(f"Expected description: {expected_description}")
-            print(f"Resulting description: {updated_interaction[0]['description']}")
-            self.assertEqual(updated_interaction[0]['abstract'], expected_abstract)
-            print(f"Expected abstract: {expected_abstract}")
-            print(f"Resulting abstract: {updated_interaction[0]['abstract']}")
-            print(test_separator)
+        # Get the interaction that was updated
+        updated_interaction = api_ctl.find_by_name(interaction_to_check)
+        print(f"Interaction to check: {interaction_to_check}")
+        self.assertEqual(updated_interaction[2][0]['status'], expected_status)
+        print(f"Expected status: {expected_status}")
+        print(f"Resulting status: {updated_interaction[2][0]['status']}")
+        self.assertEqual(updated_interaction[2][0]['description'], expected_description)
+        print(f"Expected description: {expected_description}")
+        print(f"Resulting description: {updated_interaction[2][0]['description']}")
+        self.assertEqual(updated_interaction[2][0]['abstract'], expected_abstract)
+        print(f"Expected abstract: {expected_abstract}")
+        print(f"Resulting abstract: {updated_interaction[2][0]['abstract']}")
+        print(test_separator)
 
 
 
