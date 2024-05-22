@@ -31,7 +31,7 @@ class TestGitHubAuth(unittest.TestCase):
         print(test_separator)
 
     @patch('requests.post')
-    def test_get_github_org(self, mock_post):
+    def test_get_github_org_device_flow(self, mock_post):
         
         print('Test GitHubFunctions: get_github_org')
         print(separator)
@@ -47,44 +47,6 @@ class TestGitHubAuth(unittest.TestCase):
         print(f"Resulting org: {org_info[1]['login']}")
         self.assertEqual(org_info[1]['login'], example_response['login'])
         print(test_separator)
-
-    @patch('requests.post')
-    def test_get_companies(self, mock_post):
-        
-        print('Test Companies: get_all')
-        print(separator)
-
-        example_response = {
-            'result': True,
-            'message': 'SUCCESS: read objects from container [Companies]'
-        }
-
-        mock_post.return_value = MagicMock()
-        mock_post.return_value.json.return_value = example_response
-        api_ctl = Companies(token_info['token'], os.getenv('YOUR_ORG') , process_name)
-        companies = api_ctl.get_all()
-        self.assertEqual(companies[0], example_response['result'])
-        print('Example company:')
-        pprint(companies[2][0])
-
-    @patch('requests.post')
-    def test_get_interactions(self, mock_post):
-        
-        print('Test Interactions: get_all')
-        print(separator)
-
-        example_response = {
-            'result': True,
-            'message': 'SUCCESS: read objects from container [Interactions]'
-        }
-
-        mock_post.return_value = MagicMock()
-        mock_post.return_value.json.return_value = example_response
-        api_ctl = Interactions(token_info['token'], os.getenv('YOUR_ORG') , process_name)
-        companies = api_ctl.get_all()
-        self.assertEqual(companies[0], example_response['result'])
-        print('Example Interaction:')
-        pprint(companies[2][0])
 
 if __name__ == '__main__':
     unittest.main()

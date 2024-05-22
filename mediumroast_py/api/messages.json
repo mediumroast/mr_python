@@ -1,0 +1,14 @@
+{
+    "200": {
+        "en": "Operation successful"
+    },
+    "420": {
+        "en": "Branch cannot be merged"
+    },
+    "421": {
+        "en": "Pull request or branch merge failed"
+    },
+    "422": {
+        "en": "General pull request or branch merge error"
+    }
+}

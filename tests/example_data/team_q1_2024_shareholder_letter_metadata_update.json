@@ -1,0 +1,35 @@
+{
+    "url": "Interactions/TEAM-Q1-2024-Shareholder-Letter.pdf",
+    "cached": true,
+    "linked_companies": {
+        "Atlassian Corp": "d7651f0c19343026ddb49e9f668c6f86ddedde6702008a6e7ec124a9c3731ca2"
+    },
+    "linked_studies": {},
+    "interaction_type": "Blog Post",
+    "name": "TEAM-Q1-2024-Shareholder-Letter",
+    "file_name": "TEAM-Q1-2024-Shareholder-Letter.pdf",
+    "status": 3,
+    "path": "./var/queue/0f80e0791c83d39bcbefb8a7873bf3d90e9f766e47a6bbe1d557daef5a22938b/interactions/477f7cdb6136ff8b191bc6acf9909fc069d478fe73dc7e2ce1001d50b0890ac9/TEAM-Q1-2024-Shareholder-Letter.pdf",
+    "id": "477f7cdb6136ff8b191bc6acf9909fc069d478fe73dc7e2ce1001d50b0890ac9",
+    "abstract": "In the last year, atlassian has been playing offense to strengthen its position and build an enduring 100-year-old company. It is shipping innovative new products, delivering ai-powered capabilities that will transform how its customers get work done, strengthening their position through strategic acquisitions and building a championship team. The company invests more in R&D than its peers and has a best-in-class cloud platform, so it has deep expertise across a wide range of engineering domains and can deliver new capabilities faster (and better) than peers. Itsm customers are switching from legacy itsm solutions to jira service management to deliver outstanding service at scale. compass is a new and improved way to navigate the developer experience, which is off to a flyer with several thousand paying customers already. Compass was built on the cloud and benefits from the analytics, automation, and capabilities we've been building.  and it also provides another compelling reason for customers to migrate to Jira, as well as unleashing the power of iAi across the platform. Customers at hundreds of companies large and small participated in the early access program and \"love the hell out of it,\" according to the feedback from customers who have already used it. They are already experiencing these powerful new features....",
+    "file_size": "10.1 MB",
+    "page_count": "24",
+    "contact_name": "Unknown",
+    "content_type": "application/pdf",
+    "word_count": 8639,
+    "reading_time": 35,
+    "tags": {
+        "center revenue": 6.096030365208183,
+        "cloud apps": 5.460906027836403,
+        "data center": 9.059708161277076,
+        "free cash flow": 6.375397932043973,
+        "gaap financial": 6.222406038255212,
+        "gaap operating": 5.142547361536413,
+        "investor relations": 5.74195302433701,
+        "mix shift to cloud": 5.871812055672806,
+        "net income": 5.346030365208183,
+        "revenue growth": 7.921812055672806,
+        "sources like knowledge": 5.261500010418809
+    },
+    "description": "I've talked about playing offense in this challenging environment to strengthen our position and build an enduring 100+ year company. We have also designed our best-in-class cloud platform that can deliver a comprehensive view of the ownership, dependencies, and profile information to quickly and efficiently solve the problem - and we'll soon be able to create shorter versions by identifying the most important segments that are needed to make more efficient and more effective..."
+}
