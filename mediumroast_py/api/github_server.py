@@ -463,11 +463,15 @@ class Companies(BaseGitHubObject):
         key = obj_to_update['key']
         value = obj_to_update['value']
         white_list = [
-            'description', 'company_type', 'url', 'role', 'wikipedia_url', 'status', 'logo_url',
-            'region', 'country', 'city', 'state_province', 'zip_postal', 'street_address', 'latitude', 'longitude', 'phone',
-            'google_maps_url', 'google_news_url', 'google_finance_url', 'google_patents_url',
-            'cik', 'stock_symbol', 'stock_exchange', 'recent_10k_url', 'recent_10q_url', 'firmographic_url', 'filings_url', 'owner_tranasactions',
-            'industry', 'industry_code', 'industry_group_code', 'industry_group_description', 'major_group_code', 'major_group_description'
+            'description', 'company_type', 'url', 'role', 'wikipedia_url', 'status', 
+            'logo_url', 'region', 'country', 'city', 'state_province', 'zip_postal', 
+            'street_address', 'latitude', 'longitude', 'phone', 'google_maps_url', 
+            'google_news_url', 'google_finance_url', 'google_patents_url', 'cik', 
+            'stock_symbol', 'stock_exchange', 'recent_10k_url', 'recent_10q_url', 
+            'firmographic_url', 'filings_url', 'owner_tranasactions', 'industry', 
+            'industry_code', 'industry_group_code', 'industry_group_description', 
+            'major_group_code', 'major_group_description', 'tags', 'topics', 'quality',
+            'similarity'
         ]
         return super().update_obj(name, key, value, dont_write, system, white_list)
 

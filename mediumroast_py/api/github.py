@@ -566,135 +566,164 @@ class GitHubFunctions:
             return [False, f"ERROR: unable to read objects from container [{container_name}]", str(e)]
     
 
-    def update_object(self, container_name, updates=None, dont_write=False, system=False, white_list=[]):
+    def update_object(self, updates):
         """
-        Updates an object in a specified container.
+        Update an object in a container in a specific branch.
 
         Parameters
         ----------
-        container_name : str
-            The name of the container where the object is located.
-        obj_name : str
-            The name of the object to update.
-        key : str, optional
-            The key in the object to update. This parameter is ignored if `updates` is provided.
-        value : str, optional
-            The new value to set for the key. This parameter is ignored if `updates` is provided.
-        updates : dict, optional
-            A dictionary of key-value pairs to update in the object. If provided, `key` and `value` are ignored.
-        dont_write : bool, optional
-            If True, the object will not be written back to the container. Default is False.
-        system : bool, optional
-            If True, the function is being called by the system, and will bypass certain checks. Default is False.
-        white_list : list, optional
-            A list of keys that are allowed to be updated. If empty, all keys can be updated. Default is an empty list.
+
+        updates : dict
+            A dictionary containing the updates to apply to the object.
 
         Returns
         -------
         list
-            A list containing a boolean indicating success or failure, and a status message.
+            A list containing a boolean indicating success or failure, a status message, and the updated object (or the error message in case of failure).
         """
+        # Updates can look like this
+        # updates = {
+        #     "Studies": {
+        #       "updates": {
+        #         "My Study": {
+        #             "name": "My New Study",
+        #             "description": "This is a new study."
+        #         },
+        #         "Another Study": {
+        #             "name": "Another New Study",
+        #             "description": "This is another new study."
+        #         },
+        #       },
+
+        #       "system": False,
+        #       "white_list": []
+        #     }
+        # }
         
-        # Check to see if this is a system call or not
-        if not system:
-            # Since this is not a system call check to see if the key is in the white list
-            for my_obj in updates.keys():
-                for key in updates[my_obj].keys():
-                    if key not in white_list:
+        # Check to see if the updates dictionary is empty
+        if not updates:
+            return [False, {'status_code': 400, 'status_msg': 'No updates provided.'}, None]
+        
+        # Get the containers and put them into a list called my_containers
+        my_containers = list(updates.keys())
+
+        # For each container in the list of containers, for that container first check to see 
+        # if the system flag is set to False. If it is then check to see if the key is in the white list.
+        # If it is not in the white list return an error message.
+        for container in my_containers:
+            if not updates[container]['system']:
+                # Convert the keys to a set for efficient set operations
+                keys_set = set(updates[container].keys())
+                white_list_set = set(updates[container]['white_list'])
+
+                # Find the keys that are not allowed by subtracting the white_list from the keys
+                not_allowed_keys = keys_set - white_list_set
+
+                # If there are any not allowed keys, return the error for the first encountered key
+                if not_allowed_keys:
+                    first_not_allowed_key = next(iter(not_allowed_keys))
+                    return [
+                        False, 
+                        {
+                            'status_code': 403, 
+                            'status_msg': f'Updating the key [{first_not_allowed_key}] is not supported.'
+                        },
+                        None
+                    ]
+                # Else we want to call self.read_objects to get the objects from the container and into updates dictionary
+                else:
+                    read_response = self.read_objects(container)
+                    if not read_response[0]:
                         return [
-                            False, 
+                            False,
                             {
-                                'status_code': 403, 
-                                'status_msg': 'Updating the key [{}] is not supported.'.format(key)
+                                'status_code': read_response[1]['status_code'],
+                                'status_msg': 'Failed to read objects from container [{}].'.format(container)
                             },
                             None
                         ]
-        
-        # Read in all objects from the main branch of the container
-        read_response = self.read_objects(container_name)
-        # Check to see if the read was successful
-        if not read_response[0]:
-            return [
-                False,
-                {
-                    'status_code': read_response[1]['status_code'],
-                    'status_msg': 'Failed to read objects from container [{}].'.format(container_name)
-                },
-                None
-            ]
-        
-        # Catch the container for modification
+                    updates[container]['objects'] = read_response[2]['mr_json']
+
+
+        # Catch the containers for modification
         repo_metadata = {
             "containers": {}, 
             "branch": {}
         }
-
+        
+        # Create a dictionary to hold the caught containers
         caught = dict()
-        if not dont_write:
-            repo_metadata["containers"][container_name] = {}
-            caught = self.catch_container(repo_metadata)
-            if not caught[0]:
-                return [
-                    False,
-                    {
-                        'status_code': 503,
-                        'status_msg': caught[1]['status_msg']
-                    },
-                    caught
-                ]
-        
-        # Get the object from the read response
-        current_objects = read_response[2]['mr_json']
-        # Loop through the updates, find the object(s) to update, and then perform the updates
-        for my_obj in updates.keys():
-            obj_name = my_obj
-            obj = None
-            # Remove the object from the list of objects so we can add it back later
-            for item in current_objects:
-                if item.get('name') == obj_name:  # assuming 'name' is the relevant key in the dictionaries
-                    obj = item
-                    # Remove object from the list
-                    current_objects.remove(item)
-                    break
-            # Check to see if the object exists
-            if obj is None:
-                return [
-                    False,
-                    {
-                        'status_code': 404,
-                        'status_msg': 'Object [{}] does not exist in container [{}].'.format(obj_name, container_name)
-                    },
-                    None
-                ]
-            # Check to see if we should update the object using the updates dictionary
-            for key, value in updates[my_obj].items():
-                # Update the object
-                obj[key] = value
-                now = datetime.now()
-                obj['modification_date'] = now.isoformat()
 
-            # Append the updated object to the list of objects
-            current_objects.append(obj)
+        # Map the containers to the repo_metadata dictionary
+        repo_metadata["containers"] = {container: {} for container in my_containers}
 
-        # Check to see if we should write the updated object back to the container
-        if not dont_write:
-            write_response = self.write_object(
-                container_name, 
-                current_objects,
-                caught[2]['branch']['name'],
-                caught[2]['containers'][container_name]['object_sha']
-            )
-            if not write_response[0]:
-                return [
-                    False,
-                    {
-                        'status_code': write_response[1]['status_code'],
-                        'status_msg': 'Failed to write updated object [{}] to container [{}].'.format(obj_name, container_name)
-                    },
-                    None
-                ]
+        # Catch all the containers
+        caught = self.catch_container(repo_metadata)
+
+        if not caught[0]:
+            return [
+                False,
+                {
+                    'status_code': 503,
+                    'status_msg': caught[1]['status_msg']
+                },
+                caught
+            ]
         
-        # Release the container
+        # Loop through the containers and update the objects
+        for container_name in my_containers:
+            # Get the current objects from the dictionary
+            current_objects = updates[container_name]['objects']
+            # Get the updates from the dictionary
+            updates = updates[container_name]['updates']
+            # Loop through the updates, find the object(s) to update, and then perform the updates
+            for my_obj in updates.keys():
+                obj_name = my_obj
+                obj = None
+                # Remove the object from the list of objects so we can add it back later
+                for item in current_objects:
+                    if item.get('name') == obj_name:  # assuming 'name' is the relevant key in the dictionaries
+                        obj = item
+                        # Remove object from the list
+                        current_objects.remove(item)
+                        break
+                # Check to see if the object exists
+                if obj is None:
+                    return [
+                        False,
+                        {
+                            'status_code': 404,
+                            'status_msg': 'Object [{}] does not exist in container [{}].'.format(obj_name, container_name)
+                        },
+                        None
+                    ]
+                # Check to see if we should update the object using the updates dictionary
+                for key, value in updates[my_obj].items():
+                    # Update the object
+                    obj[key] = value
+                    now = datetime.now()
+                    obj['modification_date'] = now.isoformat()
+
+                # Append the updated object to the list of objects
+                current_objects.append(obj)
+
+                write_response = self.write_object(
+                    container_name, 
+                    current_objects,
+                    caught[2]['branch']['name'],
+                    caught[2]['containers'][container_name]['object_sha']
+                )
+                if not write_response[0]:
+                    return [
+                        False,
+                        {
+                            'status_code': write_response[1]['status_code'],
+                            'status_msg': 'Failed to write updated object [{}] to container [{}].'.format(obj_name, container_name)
+                        },
+                        None
+                    ]
+        
+        # Release the containers
         released = self.release_container(caught[2], f"Updated [{len(current_objects)}] [{container_name}] objects.")
         if not released[0]:
             return [
@@ -707,7 +736,7 @@ class GitHubFunctions:
             ]
 
         # Return the updated object
-        return [True, {'status_code': 200, 'status_msg': 'Object updated successfully.'}, obj]
+        return [True, {'status_code': 200, 'status_msg': 'Object updated successfully.'}, updates]
 
     def delete_object(self, container_name, file_name, branch_name, sha):
         """
