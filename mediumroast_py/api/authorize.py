@@ -1,4 +1,5 @@
 import requests
+from datetime import datetime, timezone, timedelta
 import time
 import webbrowser
 import jwt
@@ -47,9 +48,9 @@ class GitHubAuth:
         self.env = env
         self.client_type = client_type
         self.client_id = env['clientId']
-        self.app_id = env['appId']
-        self.installation_id = env['installationId']
-        self.secret_file = env['secretFile']
+        self.app_id = env['appId'] if 'appId' in env else None
+        self.installation_id = env['installationId'] if 'installationId' in env else None
+        self.secret_file = env['secretFile']  if 'secretFile' in env else None
         self.device_code = None
 
     def get_access_token_device_flow(self):
@@ -89,7 +90,8 @@ class GitHubAuth:
 
             if 'access_token' in token_data:
                 # Assume the token expires in 1 hour
-                expires_at = time.time() + int(token_data['expires_in'][0])
+                expiration_time = datetime.now(timezone.utc) + timedelta(seconds=3600)
+                expires_at = expiration_time.strftime("%Y-%m-%dT%H:%M:%SZ")
                 return {
                     'token': token_data['access_token'][0], 
                     'refresh_token': token_data['refresh_token'][0],
@@ -101,7 +103,7 @@ class GitHubAuth:
             else:
                 raise Exception(f"Failed to get access token: {token_data}")
 
-    def get_access_token_pat(self, pat_file_path):
+    def get_access_token_pat(self, default_expiry_days=30):
         """
         Get the Personal Access Token (PAT) from a file.
 
@@ -109,17 +111,19 @@ class GitHubAuth:
         ----------
         pat_file_path : str
             The path to the file containing the PAT.
+        default_expiry_days : int, optional
+            The default number of days until the PAT expires (30 by default).
 
         Returns
         -------
         str
             The PAT.
         """
-        return [False, f'initial implementation completed but unconfirmed, untested and unsupported', None]
-        with open(pat_file_path, 'r') as file:
+        with open(self.secret_file, 'r') as file:
             pat = file.read().strip()
         # Set the expiration time to a far future date
-        expires_at = float('inf')
+        expiration_date = datetime.now(timezone.utc) + timedelta(days=default_expiry_days)
+        expires_at = expiration_date.strftime("%Y-%m-%dT%H:%M:%SZ")
 
         return {'token': pat, 'expires_at': expires_at, 'auth_type': 'pat'}
 
@@ -165,51 +169,7 @@ class GitHubAuth:
         return {'token': token, 'expires_at': expires_at, 'auth_type': 'pem'}
     
 
-    def get_access_token_client_secret(self, client_id, client_secret):
-        """
-        Get an access token using a client secret.
-
-        Parameters
-        ----------
-        client_secret : str
-            The client secret.
-        client_id : str
-            The client ID.
-
-        Returns
-        -------
-        dict
-            A dictionary containing the access token and its expiration time.
-        """
-        return [False, f'initial implementation completed but unconfirmed, untested and unsupported', None]
-        # The URL of the token endpoint
-        url = "https://github.com/login/oauth/access_token"
-
-        # The data to send in the POST request
-        data = {
-            "client_id": client_id,
-            "client_secret": client_secret,
-            "code": "authorization_code",  # Replace with your actual authorization code
-        }
-
-        # Make the POST request
-        response = requests.post(url, data=data)
-
-        # Check the response
-        if response.status_code == 200:
-            # Parse the response as JSON
-            token_info = response.json()
-
-            # Return the access token and its expiration time
-            return {
-                "access_token": token_info["access_token"],
-                "expires_in": token_info["expires_in"],
-            }
-        else:
-            # If the request failed, raise an exception
-            response.raise_for_status()
-
-    def check_and_refresh_token(self, token_info):
+    def check_and_refresh_token(self, token_info, force_refresh=False):
         """
         Check the expiration of the access token and regenerate it if necessary.
 
@@ -223,15 +183,17 @@ class GitHubAuth:
         dict
             A dictionary containing the (possibly refreshed) access token, its expiration time, and the auth type.
         """
+        expiry = datetime.strptime(token_info['expires_at'], "%Y-%m-%dT%H:%M:%SZ")
+        expiry = expiry.replace(tzinfo=timezone.utc)
         # Check if the token has expired
-        if time.time() >= token_info['expires_at']:
+        if datetime.now(timezone.utc) < expiry or force_refresh:
             # The token has expired, regenerate it
             if token_info['auth_type'] == 'pem':
-                token_info = self.get_access_token_pem(self.pem_file_path, self.app_id, self.installation_id)
-            elif token_info['auth_type'] == 'device_flow':
+                token_info = self.get_access_token_pem()
+            elif token_info['auth_type'] == 'device-flow':
                 token_info = self.get_access_token_device_flow()
             elif token_info['auth_type'] == 'pat':
-                token_info = self.get_access_token_pat(self.pat_file_path)
+                raise ValueError("Automatic PAT refresh is not supported. Please generate a new PAT.")
             else:
                 raise ValueError(f"Unknown auth type: {token_info['auth_type']}")
 

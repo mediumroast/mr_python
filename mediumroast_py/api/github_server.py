@@ -120,37 +120,21 @@ class BaseGitHubObject:
             return released
         return [True, {'status_code': 200, 'status_msg': f"created [{len(objs)}] {self.obj_type}"}, None]
 
-    def update_obj(self, updates=None, dont_write=False, system=False, white_list=None):
+    def update_obj(self, updates):
         """
-        Update an object in the GitHub repository.
+        Update objects in the GitHub repository.
 
         Parameters
         ----------
-        obj_name : str
-            The name of the object to update.
-        key : str
-            The attribute to update.
-        value : str
-            The new value for the attribute.
-        dont_write : bool, optional
-            If True, the object will not be written to the repository. Default is False.
-        system : bool, optional
-            If True, the update is a system update. Default is False.
-        white_list : list, optional
-            A list of attributes that are allowed to be updated. If None, all attributes can be updated.
+        updates : dict
+            A dictionary where the keys are the object names and the values are the updates to apply.
 
         Returns
         -------
         list
             A list containing a boolean indicating success or failure, and a status message.
         """
-        return self.server_ctl.update_object(
-            self.obj_type, 
-            updates=updates,
-            dont_write=dont_write, 
-            system=system, 
-            white_list=white_list
-        )
+        return self.server_ctl.update_object(updates)
 
     def delete_obj(self, obj_name, source, repo_metadata=None, catch_it=True):
         """
@@ -459,6 +443,7 @@ class Companies(BaseGitHubObject):
         dict
             The updated company object.
         """
+        # TODO this won't work becuse the structure of updates needs to be different
         name = obj_to_update['name']
         key = obj_to_update['key']
         value = obj_to_update['value']
@@ -473,7 +458,15 @@ class Companies(BaseGitHubObject):
             'major_group_code', 'major_group_description', 'tags', 'topics', 'quality',
             'similarity'
         ]
-        return super().update_obj(name, key, value, dont_write, system, white_list)
+        updates = {
+            self.obj_type: {
+                'updates': updates,
+                'system': system,
+                'white_list': white_list
+            }
+        }
+
+        return super().update_obj(updates)
 
     def delete_obj(self, obj_name, allow_orphans=False):
         """
@@ -573,7 +566,7 @@ class Interactions(BaseGitHubObject):
         """
         super().__init__(token, org, process_name, 'Interactions')
 
-    def update_obj(self, updates, dont_write=False, system=False):
+    def update_obj(self, updates, system=False):
         """
         Update an interaction object in the GitHub repository.
 
@@ -599,13 +592,15 @@ class Interactions(BaseGitHubObject):
             'region', 'country', 'city', 'state_province', 'zip_postal', 'street_address', 'latitude', 'longitude',
             'public', 'groups', 'contact_name', 'topics', 'tags'
         ]
+        updates = {
+            self.obj_type: {
+                'updates': updates,
+                'system': system,
+                'white_list': white_list
+            }
+        }
 
-        return super().update_obj(
-            updates=updates,
-            dont_write=dont_write, 
-            system=system, 
-            white_list=white_list
-        )
+        return super().update_obj(updates)
 
     def delete_obj(self, obj_name):
         """

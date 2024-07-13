@@ -10,7 +10,7 @@ from mediumroast_py.api.github_server import Companies, Interactions
 from pprint import pprint
 
 
-class TestGitHubAuth(unittest.TestCase):
+class TestMediumroastForGitHubFunctions(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         global separator

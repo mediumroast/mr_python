@@ -505,12 +505,13 @@ class GitHubFunctions:
         try:
             repo = self.github_instance.get_repo(f"{self.org_name}/{self.repo_name}")
             file_path = f"{container_name}/{self.object_files[container_name]}"
+            obj_sha = self.get_sha(container_name, self.object_files[container_name], ref)[2]
             # file_contents = repo.get_contents(file_path, ref=ref, sha=sha)
             write_response = repo.update_file(
                 file_path, 
                 f"Update object [{self.object_files[container_name]}]", 
                 content=content_to_transmit,
-                sha=sha, 
+                sha=obj_sha, 
                 branch=ref
             )
             # NOTICE: github.Repository.Repository.update_file() has a formatting bug in the library the below is the fix
@@ -611,38 +612,19 @@ class GitHubFunctions:
         # if the system flag is set to False. If it is then check to see if the key is in the white list.
         # If it is not in the white list return an error message.
         for container in my_containers:
-            if not updates[container]['system']:
-                # Convert the keys to a set for efficient set operations
-                keys_set = set(updates[container].keys())
-                white_list_set = set(updates[container]['white_list'])
 
-                # Find the keys that are not allowed by subtracting the white_list from the keys
-                not_allowed_keys = keys_set - white_list_set
-
-                # If there are any not allowed keys, return the error for the first encountered key
-                if not_allowed_keys:
-                    first_not_allowed_key = next(iter(not_allowed_keys))
+                # Get the current objects from the container
+                read_response = self.read_objects(container)
+                if not read_response[0]:
                     return [
-                        False, 
+                        False,
                         {
-                            'status_code': 403, 
-                            'status_msg': f'Updating the key [{first_not_allowed_key}] is not supported.'
+                            'status_code': read_response[1]['status_code'],
+                            'status_msg': 'Failed to read objects from container [{}].'.format(container)
                         },
                         None
                     ]
-                # Else we want to call self.read_objects to get the objects from the container and into updates dictionary
-                else:
-                    read_response = self.read_objects(container)
-                    if not read_response[0]:
-                        return [
-                            False,
-                            {
-                                'status_code': read_response[1]['status_code'],
-                                'status_msg': 'Failed to read objects from container [{}].'.format(container)
-                            },
-                            None
-                        ]
-                    updates[container]['objects'] = read_response[2]['mr_json']
+                updates[container]['objects'] = read_response[2]['mr_json']
 
 
         # Catch the containers for modification
@@ -672,8 +654,15 @@ class GitHubFunctions:
         
         # Loop through the containers and update the objects
         for container_name in my_containers:
+            # Convert the white_list to a set for efficient set operations
+            white_list_set = set(updates[container]['white_list'])
+
+            # Capture the system flag
+            system = updates[container]['system']
+
             # Get the current objects from the dictionary
             current_objects = updates[container_name]['objects']
+
             # Get the updates from the dictionary
             updates = updates[container_name]['updates']
             # Loop through the updates, find the object(s) to update, and then perform the updates
@@ -697,6 +686,25 @@ class GitHubFunctions:
                         },
                         None
                     ]
+                if not system:
+                    # Check to see if the updates are in the white list
+                    keys_set = set(updates[my_obj].keys())
+
+                    # Find the keys that are not allowed by subtracting the white_list from the keys
+                    not_allowed_keys = keys_set - white_list_set
+
+                    # If there are any not allowed keys, return the error for the first encountered key
+                    if not_allowed_keys:
+                        first_not_allowed_key = next(iter(not_allowed_keys))
+                        return [
+                            False, 
+                            {
+                                'status_code': 403, 
+                                'status_msg': f'Updating the key [{first_not_allowed_key}] is not supported.'
+                            },
+                            None
+                        ]
+                
                 # Check to see if we should update the object using the updates dictionary
                 for key, value in updates[my_obj].items():
                     # Update the object
