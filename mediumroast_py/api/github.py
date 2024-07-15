@@ -562,9 +562,23 @@ class GitHubFunctions:
             file_path = f"{container_name}/{self.object_files[container_name]}"
             file_contents = repo.get_contents(file_path, ref=branch_name)
             decoded_content = base64.b64decode(file_contents.content).decode()
-            return [True, f"SUCCESS: read objects from container [{container_name}]", {"mr_json": json.loads(decoded_content), "sha": file_contents.sha}]
+            return [
+                True, 
+                {
+                    'status_msg': f"SUCCESS: read objects from container [{container_name}]",
+                    'status_code': 200
+                }, 
+                {"mr_json": json.loads(decoded_content), "sha": file_contents.sha}
+            ]
         except Exception as e:
-            return [False, f"ERROR: unable to read objects from container [{container_name}]", str(e)]
+            return [
+                False, 
+                {
+                    'status_msg': f"ERROR: unable to read objects from container [{container_name}] due to {e}",
+                    'status_code': 423
+                }, 
+                str(e)
+            ]
     
 
     def update_object(self, updates):
@@ -655,10 +669,10 @@ class GitHubFunctions:
         # Loop through the containers and update the objects
         for container_name in my_containers:
             # Convert the white_list to a set for efficient set operations
-            white_list_set = set(updates[container]['white_list'])
+            white_list_set = set(updates[container_name]['white_list'])
 
             # Capture the system flag
-            system = updates[container]['system']
+            system = updates[container_name]['system']
 
             # Get the current objects from the dictionary
             current_objects = updates[container_name]['objects']
@@ -700,7 +714,7 @@ class GitHubFunctions:
                             False, 
                             {
                                 'status_code': 403, 
-                                'status_msg': f'Updating the key [{first_not_allowed_key}] is not supported.'
+                                'status_msg': f'Updating the key [{first_not_allowed_key}] is not supported in container [{container_name}].'
                             },
                             None
                         ]
