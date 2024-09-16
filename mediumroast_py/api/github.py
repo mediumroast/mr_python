@@ -625,20 +625,21 @@ class GitHubFunctions:
         # For each container in the list of containers, for that container first check to see 
         # if the system flag is set to False. If it is then check to see if the key is in the white list.
         # If it is not in the white list return an error message.
-        for container in my_containers:
+        # NOTE: Commenting out as this may not be needed since catch reads the objects
+        # for container in my_containers:
 
-                # Get the current objects from the container
-                read_response = self.read_objects(container)
-                if not read_response[0]:
-                    return [
-                        False,
-                        {
-                            'status_code': read_response[1]['status_code'],
-                            'status_msg': 'Failed to read objects from container [{}].'.format(container)
-                        },
-                        None
-                    ]
-                updates[container]['objects'] = read_response[2]['mr_json']
+        #         # Get the current objects from the container
+        #         read_response = self.read_objects(container)
+        #         if not read_response[0]:
+        #             return [
+        #                 False,
+        #                 {
+        #                     'status_code': read_response[1]['status_code'],
+        #                     'status_msg': 'Failed to read objects from container [{}].'.format(container)
+        #                 },
+        #                 None
+        #             ]
+        #         updates[container]['objects'] = read_response[2]['mr_json']
 
 
         # Catch the containers for modification
@@ -675,7 +676,7 @@ class GitHubFunctions:
             system = updates[container_name]['system']
 
             # Get the current objects from the dictionary
-            current_objects = updates[container_name]['objects']
+            current_objects = caught[2]['containers'][container_name]['objects']
 
             # Get the updates from the dictionary
             updates = updates[container_name]['updates']

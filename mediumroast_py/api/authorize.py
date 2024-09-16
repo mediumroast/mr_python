@@ -22,12 +22,10 @@ class GitHubAuth:
     ----------
     env : dict
         A dictionary containing environment variables.
+    private_key : str
+        A string containing the PEM private key for the GitHub App.
     client_type : str
         The type of the client ('github-app' by default).
-    client_id : str
-        The client ID.
-    device_code : str
-        The device code (None by default).
 
     Methods
     -------
@@ -51,6 +49,7 @@ class GitHubAuth:
         self.app_id = env['appId'] if 'appId' in env else None
         self.installation_id = env['installationId'] if 'installationId' in env else None
         self.secret_file = env['secretFile']  if 'secretFile' in env else None
+        self.private_key = env['private_key'] if 'private_key' in env else None
         self.device_code = None
 
     def get_access_token_device_flow(self):
@@ -137,7 +136,13 @@ class GitHubAuth:
             The installation access token.
         """
         # Load the private key
-        private_key = Path(self.secret_file).read_text()
+        private_key = str()
+        if self.private_key:
+            private_key = self.private_key
+        else:
+            private_key = Path(self.secret_file).read_text() 
+
+        print(f"Private key: {private_key}")
 
         # Generate the JWT
         payload = {
