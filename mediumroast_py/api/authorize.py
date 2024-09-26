@@ -142,8 +142,6 @@ class GitHubAuth:
         else:
             private_key = Path(self.secret_file).read_text() 
 
-        print(f"Private key: {private_key}")
-
         # Generate the JWT
         payload = {
             # issued at time
