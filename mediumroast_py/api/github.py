@@ -167,27 +167,6 @@ class GitHubFunctions:
         except Exception as e:
             return [False, f'ERROR: unable to capture actions billings info due to [{str(e)}]', str(e)]
 
-    # def get_storage_billings(self):
-    #     """
-    #     Get the storage billings information for the organization.
-
-    #     Returns
-    #     -------
-    #     list
-    #         A list containing a boolean indicating success or failure, a status message, and the storage billings information as a dictionary (or the error message in case of failure).
-        # """
-        # return [False, f'initial port completed but implementation unconfirmed, untested and unsupported', None]
-        # try:
-        #     url = f"https://api.github.com/orgs/{self.org_name}/settings/billing/shared-storage"
-        #     response = requests.get(url, auth=HTTPBasicAuth(self.username, self.token))
-
-        #     if response.status_code == 200:
-        #         return [True, 'SUCCESS: able to capture storage billings info', response.json()]
-        #     else:
-        #         return [False, f'ERROR: unable to capture storage billings info due to [{response.status_code}]', None]
-        # except Exception as e:
-        #     return [False, f'ERROR: unable to capture storage billings info due to [{str(e)}]', str(e)]
-        # Create a python function that talks directly to the GitHub API to get the storage billings information
     def get_storage_billings(self):
         """
         Get the storage billings information for the organization.
@@ -403,6 +382,27 @@ class GitHubFunctions:
         except Exception as e:
             return [False, { 'status_code': 503, 'status_msg': f'unable to delete object [{file_name}] from container [{container_name}]' }, str(e)]
 
+    def _custom_encode_uri_component(self, string):
+        return ''.join([urllib.parse.quote(char, safe='') if char in "!*'()" else urllib.parse.quote(char) for char in string])
+
+    def _download_file(self, url, headers):
+        try:
+            download_result = requests.get(url, headers=headers)
+            download_result.raise_for_status()
+            return [True, download_result.content]
+        except requests.exceptions.RequestException as e:
+            if 'Request path contains unescaped characters' in str(e) or 'ERR_UNESCAPED_CHARACTERS' in str(e):
+                return [False, 'ERR_UNESCAPED_CHARACTERS']
+            return [False, str(e)]
+
+    def _re_encode_download_url(self, url, original_file_name):
+        url_parts = url.split('/')
+        last_part = url_parts.pop()
+        url_parts.pop()
+        alt_last_part = last_part.split('?')
+        query_params = alt_last_part[-1] if len(alt_last_part) > 1 else ''
+        return f"{'/'.join(url_parts)}/{original_file_name}{'?' + query_params if query_params else ''}"
+
     def read_blob(self, file_name):
         """
         Read a blob (file) from a container (directory) in a specific branch.
@@ -416,6 +416,35 @@ class GitHubFunctions:
         -------
         list
             A list containing a boolean indicating success or failure, a status message, and the blob's raw data (or the error message in case of failure).
+        """
+        original_file_name_encoded = self._custom_encode_uri_component(file_name)
+        encoded_file_name = urllib.parse.quote(file_name)
+        object_url = f"https://api.github.com/repos/{self.org_name}/{self.repo_name}/contents/{encoded_file_name}"
+        headers = {'Authorization': 'token ' + self.token}
+
+        try:
+            result = requests.get(object_url, headers=headers)
+            result.raise_for_status()
+            result_json = result.json()
+            download_url = result_json['download_url']
+
+            blob_data = self._download_file(download_url, headers)
+
+            if blob_data[0]:
+                return [True, {'status_code': 200, 'status_msg': f'read object [{file_name}]'}, blob_data[1]]
+            else:
+                if blob_data[1] == 'ERR_UNESCAPED_CHARACTERS':
+                    download_url = self._re_encode_download_url(download_url, original_file_name_encoded)
+                    blob_data = self._download_file(download_url, headers)
+                    if blob_data[0]:
+                        return [True, {'status_code': 200, 'status_msg': f'read object [{file_name}]'}, blob_data[1]]
+                return [False, {'status_code': 503, 'status_msg': f'unable to read object [{file_name}] due to [{blob_data[1]}].'}, blob_data[1]]
+        except Exception as e:
+            return [False, {'status_code': 503, 'status_msg': f'unable to read object [{file_name}]'}, str(e)]
+
+    def read_blob_orig(self, file_name):
+        """
+        NOTE: This is the original implementation of the read_blob method. It is kept here for reference and comparison purposes. It is not used in the current implementation.
         """
 
         encoded_file_name = urllib.parse.quote(file_name)
@@ -438,14 +467,6 @@ class GitHubFunctions:
                 {"status_code": 503, "status_msg": f"unable to read object [{file_name}] due to [{e}]."}, 
                 e
             ]
-        # NOTE: The code below is the original implementation that doesn't work for larger files
-        # try:
-        #     repo = self.github_instance.get_repo(f"{self.org_name}/{self.repo_name}")
-        #     file_contents = repo.get_contents(file_name, ref=branch_name)
-        #     decoded_content = base64.b64decode(file_contents.content)
-        #     return [True, f"SUCCESS: read object [{file_name}] from container [{file_name}]", decoded_content]
-        # except Exception as e:
-        #     return [False, f"ERROR: unable to read object [{file_name}].", str(e)] 
     
     def write_blob(self, container_name, file_name, blob, branch_name, sha=None):
         """
@@ -670,7 +691,12 @@ class GitHubFunctions:
         # Loop through the containers and update the objects
         for container_name in my_containers:
             # Convert the white_list to a set for efficient set operations
+            # NOTICE: the two lines below are added because of processing problems with Caffeine.
+            #         Until we understand what the problems are we will keep this code in place.
+            with open('/dev/null', 'w') as f:
+                f.write(json.dumps(updates))
             white_list_set = set(updates[container_name]['white_list'])
+            
 
             # Capture the system flag
             system = updates[container_name]['system']

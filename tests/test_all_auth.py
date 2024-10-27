@@ -84,6 +84,14 @@ class TestMediumroastForGitHubAuth(unittest.TestCase):
             'secretFile': os.getenv('YOUR_PAT_FILE')
         })
 
+        # Check for token validity
+        token = str()
+        with open(os.getenv('YOUR_PAT_FILE'), 'r') as f:
+            token = f.read()
+            is_valid = auth.check_token_expiration(token)
+            self.assertTrue(is_valid[0], f"Token should be valid, result is {is_valid[2]}.")
+            print(separator)
+
         token_info = auth.get_access_token_pat()
         self.assertTrue('token' in token_info and token_info['token'], "Token should be present and not empty.")
         print(f"Access token from pat authorization: {token_info['token']}")
