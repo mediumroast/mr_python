@@ -52,6 +52,35 @@ class GitHubAuth:
         self.private_key = env['private_key'] if 'private_key' in env else None
         self.device_code = None
 
+    def check_token_expiration(self, token):
+        """
+        Checks if the GitHub token is still valid by making a request to the GitHub API.
+
+        Parameters
+        ----------
+        token : str
+            The GitHub token to check.
+
+        Returns
+        -------
+        list
+            A list containing a boolean indicating success or failure, a status message, and the response data (or the error message in case of failure).
+        """
+        url = 'https://api.github.com/user'
+        headers = {
+            'Authorization': f'token {token}',
+            'Accept': 'application/vnd.github.v3+json'
+        }
+
+        response = requests.get(url, headers=headers)
+
+        if not response.ok:
+            return [False, {'status_code': 500, 'status_msg': response.reason}, None]
+
+        data = response.json()
+        return [True, {'status_code': 200, 'status_msg': response.reason}, data]
+    
+    
     def get_access_token_device_flow(self):
         """
         Gets an access token using the device flow.
@@ -186,17 +215,16 @@ class GitHubAuth:
         dict
             A dictionary containing the (possibly refreshed) access token, its expiration time, and the auth type.
         """
-        expiry = datetime.strptime(token_info['expires_at'], "%Y-%m-%dT%H:%M:%SZ")
-        expiry = expiry.replace(tzinfo=timezone.utc)
+        is_valid = self.check_token_expiration(token_info['token'])
         # Check if the token has expired
-        if datetime.now(timezone.utc) < expiry or force_refresh:
+        if not is_valid[0] or force_refresh:
             # The token has expired, regenerate it
             if token_info['auth_type'] == 'pem':
                 token_info = self.get_access_token_pem()
             elif token_info['auth_type'] == 'device-flow':
                 token_info = self.get_access_token_device_flow()
             elif token_info['auth_type'] == 'pat':
-                raise ValueError("Automatic PAT refresh is not supported. Please generate a new PAT.")
+                raise ValueError(f"Automatic PAT refresh is not supported. Please generate a new PAT. Validity check returned: {is_valid[2]}")
             else:
                 raise ValueError(f"Unknown auth type: {token_info['auth_type']}")
 
