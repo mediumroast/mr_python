@@ -167,27 +167,6 @@ class GitHubFunctions:
         except Exception as e:
             return [False, f'ERROR: unable to capture actions billings info due to [{str(e)}]', str(e)]
 
-    # def get_storage_billings(self):
-    #     """
-    #     Get the storage billings information for the organization.
-
-    #     Returns
-    #     -------
-    #     list
-    #         A list containing a boolean indicating success or failure, a status message, and the storage billings information as a dictionary (or the error message in case of failure).
-        # """
-        # return [False, f'initial port completed but implementation unconfirmed, untested and unsupported', None]
-        # try:
-        #     url = f"https://api.github.com/orgs/{self.org_name}/settings/billing/shared-storage"
-        #     response = requests.get(url, auth=HTTPBasicAuth(self.username, self.token))
-
-        #     if response.status_code == 200:
-        #         return [True, 'SUCCESS: able to capture storage billings info', response.json()]
-        #     else:
-        #         return [False, f'ERROR: unable to capture storage billings info due to [{response.status_code}]', None]
-        # except Exception as e:
-        #     return [False, f'ERROR: unable to capture storage billings info due to [{str(e)}]', str(e)]
-        # Create a python function that talks directly to the GitHub API to get the storage billings information
     def get_storage_billings(self):
         """
         Get the storage billings information for the organization.
@@ -403,6 +382,27 @@ class GitHubFunctions:
         except Exception as e:
             return [False, { 'status_code': 503, 'status_msg': f'unable to delete object [{file_name}] from container [{container_name}]' }, str(e)]
 
+    def _custom_encode_uri_component(self, string):
+        return ''.join([urllib.parse.quote(char, safe='') if char in "!*'()" else urllib.parse.quote(char) for char in string])
+
+    def _download_file(self, url, headers):
+        try:
+            download_result = requests.get(url, headers=headers)
+            download_result.raise_for_status()
+            return [True, download_result.content]
+        except requests.exceptions.RequestException as e:
+            if 'Request path contains unescaped characters' in str(e) or 'ERR_UNESCAPED_CHARACTERS' in str(e):
+                return [False, 'ERR_UNESCAPED_CHARACTERS']
+            return [False, str(e)]
+
+    def _re_encode_download_url(self, url, original_file_name):
+        url_parts = url.split('/')
+        last_part = url_parts.pop()
+        url_parts.pop()
+        alt_last_part = last_part.split('?')
+        query_params = alt_last_part[-1] if len(alt_last_part) > 1 else ''
+        return f"{'/'.join(url_parts)}/{original_file_name}{'?' + query_params if query_params else ''}"
+
     def read_blob(self, file_name):
         """
         Read a blob (file) from a container (directory) in a specific branch.
@@ -416,6 +416,35 @@ class GitHubFunctions:
         -------
         list
             A list containing a boolean indicating success or failure, a status message, and the blob's raw data (or the error message in case of failure).
+        """
+        original_file_name_encoded = self._custom_encode_uri_component(file_name)
+        encoded_file_name = urllib.parse.quote(file_name)
+        object_url = f"https://api.github.com/repos/{self.org_name}/{self.repo_name}/contents/{encoded_file_name}"
+        headers = {'Authorization': 'token ' + self.token}
+
+        try:
+            result = requests.get(object_url, headers=headers)
+            result.raise_for_status()
+            result_json = result.json()
+            download_url = result_json['download_url']
+
+            blob_data = self._download_file(download_url, headers)
+
+            if blob_data[0]:
+                return [True, {'status_code': 200, 'status_msg': f'read object [{file_name}]'}, blob_data[1]]
+            else:
+                if blob_data[1] == 'ERR_UNESCAPED_CHARACTERS':
+                    download_url = self._re_encode_download_url(download_url, original_file_name_encoded)
+                    blob_data = self._download_file(download_url, headers)
+                    if blob_data[0]:
+                        return [True, {'status_code': 200, 'status_msg': f'read object [{file_name}]'}, blob_data[1]]
+                return [False, {'status_code': 503, 'status_msg': f'unable to read object [{file_name}] due to [{blob_data[1]}].'}, blob_data[1]]
+        except Exception as e:
+            return [False, {'status_code': 503, 'status_msg': f'unable to read object [{file_name}]'}, str(e)]
+
+    def read_blob_orig(self, file_name):
+        """
+        NOTE: This is the original implementation of the read_blob method. It is kept here for reference and comparison purposes. It is not used in the current implementation.
         """
 
         encoded_file_name = urllib.parse.quote(file_name)
@@ -438,14 +467,6 @@ class GitHubFunctions:
                 {"status_code": 503, "status_msg": f"unable to read object [{file_name}] due to [{e}]."}, 
                 e
             ]
-        # NOTE: The code below is the original implementation that doesn't work for larger files
-        # try:
-        #     repo = self.github_instance.get_repo(f"{self.org_name}/{self.repo_name}")
-        #     file_contents = repo.get_contents(file_name, ref=branch_name)
-        #     decoded_content = base64.b64decode(file_contents.content)
-        #     return [True, f"SUCCESS: read object [{file_name}] from container [{file_name}]", decoded_content]
-        # except Exception as e:
-        #     return [False, f"ERROR: unable to read object [{file_name}].", str(e)] 
     
     def write_blob(self, container_name, file_name, blob, branch_name, sha=None):
         """
@@ -505,12 +526,13 @@ class GitHubFunctions:
         try:
             repo = self.github_instance.get_repo(f"{self.org_name}/{self.repo_name}")
             file_path = f"{container_name}/{self.object_files[container_name]}"
+            obj_sha = self.get_sha(container_name, self.object_files[container_name], ref)[2]
             # file_contents = repo.get_contents(file_path, ref=ref, sha=sha)
             write_response = repo.update_file(
                 file_path, 
                 f"Update object [{self.object_files[container_name]}]", 
                 content=content_to_transmit,
-                sha=sha, 
+                sha=obj_sha, 
                 branch=ref
             )
             # NOTICE: github.Repository.Repository.update_file() has a formatting bug in the library the below is the fix
@@ -561,9 +583,23 @@ class GitHubFunctions:
             file_path = f"{container_name}/{self.object_files[container_name]}"
             file_contents = repo.get_contents(file_path, ref=branch_name)
             decoded_content = base64.b64decode(file_contents.content).decode()
-            return [True, f"SUCCESS: read objects from container [{container_name}]", {"mr_json": json.loads(decoded_content), "sha": file_contents.sha}]
+            return [
+                True, 
+                {
+                    'status_msg': f"SUCCESS: read objects from container [{container_name}]",
+                    'status_code': 200
+                }, 
+                {"mr_json": json.loads(decoded_content), "sha": file_contents.sha}
+            ]
         except Exception as e:
-            return [False, f"ERROR: unable to read objects from container [{container_name}]", str(e)]
+            return [
+                False, 
+                {
+                    'status_msg': f"ERROR: unable to read objects from container [{container_name}] due to {e}",
+                    'status_code': 423
+                }, 
+                str(e)
+            ]
     
 
     def update_object(self, updates):
@@ -610,39 +646,21 @@ class GitHubFunctions:
         # For each container in the list of containers, for that container first check to see 
         # if the system flag is set to False. If it is then check to see if the key is in the white list.
         # If it is not in the white list return an error message.
-        for container in my_containers:
-            if not updates[container]['system']:
-                # Convert the keys to a set for efficient set operations
-                keys_set = set(updates[container].keys())
-                white_list_set = set(updates[container]['white_list'])
+        # NOTE: Commenting out as this may not be needed since catch reads the objects
+        # for container in my_containers:
 
-                # Find the keys that are not allowed by subtracting the white_list from the keys
-                not_allowed_keys = keys_set - white_list_set
-
-                # If there are any not allowed keys, return the error for the first encountered key
-                if not_allowed_keys:
-                    first_not_allowed_key = next(iter(not_allowed_keys))
-                    return [
-                        False, 
-                        {
-                            'status_code': 403, 
-                            'status_msg': f'Updating the key [{first_not_allowed_key}] is not supported.'
-                        },
-                        None
-                    ]
-                # Else we want to call self.read_objects to get the objects from the container and into updates dictionary
-                else:
-                    read_response = self.read_objects(container)
-                    if not read_response[0]:
-                        return [
-                            False,
-                            {
-                                'status_code': read_response[1]['status_code'],
-                                'status_msg': 'Failed to read objects from container [{}].'.format(container)
-                            },
-                            None
-                        ]
-                    updates[container]['objects'] = read_response[2]['mr_json']
+        #         # Get the current objects from the container
+        #         read_response = self.read_objects(container)
+        #         if not read_response[0]:
+        #             return [
+        #                 False,
+        #                 {
+        #                     'status_code': read_response[1]['status_code'],
+        #                     'status_msg': 'Failed to read objects from container [{}].'.format(container)
+        #                 },
+        #                 None
+        #             ]
+        #         updates[container]['objects'] = read_response[2]['mr_json']
 
 
         # Catch the containers for modification
@@ -672,8 +690,20 @@ class GitHubFunctions:
         
         # Loop through the containers and update the objects
         for container_name in my_containers:
+            # Convert the white_list to a set for efficient set operations
+            # NOTICE: the two lines below are added because of processing problems with Caffeine.
+            #         Until we understand what the problems are we will keep this code in place.
+            with open('/dev/null', 'w') as f:
+                f.write(json.dumps(updates))
+            white_list_set = set(updates[container_name]['white_list'])
+            
+
+            # Capture the system flag
+            system = updates[container_name]['system']
+
             # Get the current objects from the dictionary
-            current_objects = updates[container_name]['objects']
+            current_objects = caught[2]['containers'][container_name]['objects']
+
             # Get the updates from the dictionary
             updates = updates[container_name]['updates']
             # Loop through the updates, find the object(s) to update, and then perform the updates
@@ -697,6 +727,25 @@ class GitHubFunctions:
                         },
                         None
                     ]
+                if not system:
+                    # Check to see if the updates are in the white list
+                    keys_set = set(updates[my_obj].keys())
+
+                    # Find the keys that are not allowed by subtracting the white_list from the keys
+                    not_allowed_keys = keys_set - white_list_set
+
+                    # If there are any not allowed keys, return the error for the first encountered key
+                    if not_allowed_keys:
+                        first_not_allowed_key = next(iter(not_allowed_keys))
+                        return [
+                            False, 
+                            {
+                                'status_code': 403, 
+                                'status_msg': f'Updating the key [{first_not_allowed_key}] is not supported in container [{container_name}].'
+                            },
+                            None
+                        ]
+                
                 # Check to see if we should update the object using the updates dictionary
                 for key, value in updates[my_obj].items():
                     # Update the object

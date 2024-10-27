@@ -10,5 +10,8 @@
     },
     "422": {
         "en": "General pull request or branch merge error"
+    },
+    "423": {
+        "en": "Object read failed"
     }
 }
