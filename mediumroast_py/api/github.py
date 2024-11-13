@@ -251,9 +251,16 @@ class GitHubFunctions:
                 head=branch.name,
                 base=self.main_branch_name
             )
-            pull = repo.get_pull(pull.number)
-            if pull.mergeable:
-                my_merge = pull.merge(commit_message=commit_description)
+            # Get the pull request
+            pull_request = repo.get_pull(pull.number)
+
+            # Wait until we confirm the PR can be merged
+            while pull_request.mergeable is None:
+                time.sleep(2)  # Wait for 2 seconds before checking again
+                pull_request = repo.get_pull(pull.number)  # Refresh the pull request object
+
+            if pull_request.mergeable:
+                my_merge = pull_request.merge(commit_message=commit_description)
                 return [
                     True, 
                     {'status_code': 200, 'status_msg': f'Operation successful merged branch [{branch.name}] into [{self.main_branch_name}]'}, my_merge.merged
@@ -261,8 +268,8 @@ class GitHubFunctions:
             else:
                 return [
                     False, 
-                    {'status_code': 420, 'status_msg': 'Pull request cannot be merged into branch [{self.main_branch_name}] current pull state: [{pull.state}].'}, 
-                    pull
+                    {'status_code': 420, 'status_msg': 'Pull request cannot be merged into branch [{self.main_branch_name}] current pull state: [{pull_request.state}].'}, 
+                    pull_request
                 ]
         except Exception as e:
             return [
@@ -646,21 +653,6 @@ class GitHubFunctions:
         # For each container in the list of containers, for that container first check to see 
         # if the system flag is set to False. If it is then check to see if the key is in the white list.
         # If it is not in the white list return an error message.
-        # NOTE: Commenting out as this may not be needed since catch reads the objects
-        # for container in my_containers:
-
-        #         # Get the current objects from the container
-        #         read_response = self.read_objects(container)
-        #         if not read_response[0]:
-        #             return [
-        #                 False,
-        #                 {
-        #                     'status_code': read_response[1]['status_code'],
-        #                     'status_msg': 'Failed to read objects from container [{}].'.format(container)
-        #                 },
-        #                 None
-        #             ]
-        #         updates[container]['objects'] = read_response[2]['mr_json']
 
 
         # Catch the containers for modification
@@ -691,10 +683,6 @@ class GitHubFunctions:
         # Loop through the containers and update the objects
         for container_name in my_containers:
             # Convert the white_list to a set for efficient set operations
-            # NOTICE: the two lines below are added because of processing problems with Caffeine.
-            #         Until we understand what the problems are we will keep this code in place.
-            with open('/dev/null', 'w') as f:
-                f.write(json.dumps(updates))
             white_list_set = set(updates[container_name]['white_list'])
             
 
@@ -705,7 +693,7 @@ class GitHubFunctions:
             current_objects = caught[2]['containers'][container_name]['objects']
 
             # Get the updates from the dictionary
-            updates = updates[container_name]['updates']
+            updates_to_process = updates[container_name]['updates']
             # Loop through the updates, find the object(s) to update, and then perform the updates
             for my_obj in updates.keys():
                 obj_name = my_obj
@@ -729,7 +717,7 @@ class GitHubFunctions:
                     ]
                 if not system:
                     # Check to see if the updates are in the white list
-                    keys_set = set(updates[my_obj].keys())
+                    keys_set = set(updates_to_process[my_obj].keys())
 
                     # Find the keys that are not allowed by subtracting the white_list from the keys
                     not_allowed_keys = keys_set - white_list_set
@@ -747,7 +735,7 @@ class GitHubFunctions:
                         ]
                 
                 # Check to see if we should update the object using the updates dictionary
-                for key, value in updates[my_obj].items():
+                for key, value in updates_to_process[my_obj].items():
                     # Update the object
                     obj[key] = value
                     now = datetime.now()
