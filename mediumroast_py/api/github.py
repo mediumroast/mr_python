@@ -7,6 +7,7 @@ import urllib.parse
 from requests.auth import HTTPBasicAuth
 from datetime import datetime
 from pprint import pprint
+import base64
 
 __license__ = "Apache 2.0"
 __copyright__ = "Copyright (C) 2024 Mediumroast, Inc."
@@ -411,6 +412,74 @@ class GitHubFunctions:
         return f"{'/'.join(url_parts)}/{original_file_name}{'?' + query_params if query_params else ''}"
 
     def read_blob(self, file_name):
+        """
+        Read a blob (file) from a container (directory) in a specific branch.
+
+        Parameters
+        ----------
+        file_name : str
+            The name of the blob to read with a complete path to the file (e.g., dirname/filename.ext).
+
+        Returns
+        -------
+        list
+            A list containing a boolean indicating success or failure, a status message,
+            and the blob's raw data (decoded content or error message).
+        """
+        original_file_name_encoded = self._custom_encode_uri_component(file_name)
+        encoded_file_name = urllib.parse.quote(file_name)
+        object_url = f"https://api.github.com/repos/{self.org_name}/{self.repo_name}/contents/{encoded_file_name}"
+        headers = {'Authorization': 'token ' + self.token}
+
+        try:
+            result = requests.get(object_url, headers=headers)
+            result.raise_for_status()
+            result_json = result.json()
+
+            # Check if 'content' is available in the response
+            if 'content' in result_json and result_json['content']:
+                # Get the Base64-encoded content
+                encoded_content = result_json['content']
+                # Remove any newline characters
+                encoded_content = encoded_content.replace('\n', '')
+                # Decode the content
+                decoded_content = base64.b64decode(encoded_content)
+
+                # Return the decoded content
+                return [
+                    True,
+                    {'status_code': 200, 'status_msg': f'read object [{file_name}]'},
+                    decoded_content
+                ]
+            else:
+                # If 'content' is not available (e.g., for large files), use 'download_url'
+                if 'download_url' in result_json and result_json['download_url']:
+                    download_url = result_json['download_url']
+                    download_result = requests.get(download_url, headers=headers)
+                    download_result.raise_for_status()
+                    # The content is already in binary form
+                    decoded_content = download_result.content
+
+                    return [
+                        True,
+                        {'status_code': 200, 'status_msg': f'read object [{file_name}]'},
+                        decoded_content
+                    ]
+                else:
+                    return [
+                        False,
+                        {'status_code': 404, 'status_msg': f'Content not found for [{file_name}]'},
+                        None
+                    ]
+
+        except Exception as e:
+            return [
+                False,
+                {'status_code': 503, 'status_msg': f'unable to read object [{file_name}] due to [{str(e)}]'},
+                None
+            ]
+
+    def read_blob3(self, file_name):
         """
         Read a blob (file) from a container (directory) in a specific branch.
 
