@@ -390,26 +390,27 @@ class GitHubFunctions:
         except Exception as e:
             return [False, { 'status_code': 503, 'status_msg': f'unable to delete object [{file_name}] from container [{container_name}]' }, str(e)]
 
-    def _custom_encode_uri_component(self, string):
-        return ''.join([urllib.parse.quote(char, safe='') if char in "!*'()" else urllib.parse.quote(char) for char in string])
+    # In a future release the following methods will be removed as they are not used in the current implementation
+    # def _custom_encode_uri_component(self, string):
+    #     return ''.join([urllib.parse.quote(char, safe='') if char in "!*'()" else urllib.parse.quote(char) for char in string])
 
-    def _download_file(self, url, headers):
-        try:
-            download_result = requests.get(url, headers=headers)
-            download_result.raise_for_status()
-            return [True, download_result.content]
-        except requests.exceptions.RequestException as e:
-            if 'Request path contains unescaped characters' in str(e) or 'ERR_UNESCAPED_CHARACTERS' in str(e):
-                return [False, 'ERR_UNESCAPED_CHARACTERS']
-            return [False, str(e)]
+    # def _download_file(self, url, headers):
+    #     try:
+    #         download_result = requests.get(url, headers=headers)
+    #         download_result.raise_for_status()
+    #         return [True, download_result.content]
+    #     except requests.exceptions.RequestException as e:
+    #         if 'Request path contains unescaped characters' in str(e) or 'ERR_UNESCAPED_CHARACTERS' in str(e):
+    #             return [False, 'ERR_UNESCAPED_CHARACTERS']
+    #         return [False, str(e)]
 
-    def _re_encode_download_url(self, url, original_file_name):
-        url_parts = url.split('/')
-        last_part = url_parts.pop()
-        url_parts.pop()
-        alt_last_part = last_part.split('?')
-        query_params = alt_last_part[-1] if len(alt_last_part) > 1 else ''
-        return f"{'/'.join(url_parts)}/{original_file_name}{'?' + query_params if query_params else ''}"
+    # def _re_encode_download_url(self, url, original_file_name):
+    #     url_parts = url.split('/')
+    #     last_part = url_parts.pop()
+    #     url_parts.pop()
+    #     alt_last_part = last_part.split('?')
+    #     query_params = alt_last_part[-1] if len(alt_last_part) > 1 else ''
+    #     return f"{'/'.join(url_parts)}/{original_file_name}{'?' + query_params if query_params else ''}"
 
     def read_blob(self, file_name):
         """
@@ -426,7 +427,6 @@ class GitHubFunctions:
             A list containing a boolean indicating success or failure, a status message,
             and the blob's raw data (decoded content or error message).
         """
-        original_file_name_encoded = self._custom_encode_uri_component(file_name)
         encoded_file_name = urllib.parse.quote(file_name)
         object_url = f"https://api.github.com/repos/{self.org_name}/{self.repo_name}/contents/{encoded_file_name}"
         headers = {'Authorization': 'token ' + self.token}
@@ -479,70 +479,6 @@ class GitHubFunctions:
                 None
             ]
 
-    def read_blob3(self, file_name):
-        """
-        Read a blob (file) from a container (directory) in a specific branch.
-
-        Parameters
-        ----------
-        file_name : str
-            The name of the blob to read with a complete path to the file (e.g. dirname/filename.ext).
-
-        Returns
-        -------
-        list
-            A list containing a boolean indicating success or failure, a status message, and the blob's raw data (or the error message in case of failure).
-        """
-        original_file_name_encoded = self._custom_encode_uri_component(file_name)
-        encoded_file_name = urllib.parse.quote(file_name)
-        object_url = f"https://api.github.com/repos/{self.org_name}/{self.repo_name}/contents/{encoded_file_name}"
-        headers = {'Authorization': 'token ' + self.token}
-
-        try:
-            result = requests.get(object_url, headers=headers)
-            result.raise_for_status()
-            result_json = result.json()
-            download_url = result_json['download_url']
-
-            blob_data = self._download_file(download_url, headers)
-
-            if blob_data[0]:
-                return [True, {'status_code': 200, 'status_msg': f'read object [{file_name}]'}, blob_data[1]]
-            else:
-                if blob_data[1] == 'ERR_UNESCAPED_CHARACTERS':
-                    download_url = self._re_encode_download_url(download_url, original_file_name_encoded)
-                    blob_data = self._download_file(download_url, headers)
-                    if blob_data[0]:
-                        return [True, {'status_code': 200, 'status_msg': f'read object [{file_name}]'}, blob_data[1]]
-                return [False, {'status_code': 503, 'status_msg': f'unable to read object [{file_name}] due to [{blob_data[1]}].'}, blob_data[1]]
-        except Exception as e:
-            return [False, {'status_code': 503, 'status_msg': f'unable to read object [{file_name}]'}, str(e)]
-
-    def read_blob_orig(self, file_name):
-        """
-        NOTE: This is the original implementation of the read_blob method. It is kept here for reference and comparison purposes. It is not used in the current implementation.
-        """
-
-        encoded_file_name = urllib.parse.quote(file_name)
-        object_url = f"https://api.github.com/repos/{self.org_name}/{self.repo_name}/contents/{encoded_file_name}"
-        headers = {'Authorization': 'token ' + self.token}
-        try:
-            result = requests.get(object_url, headers=headers)
-            result_json = result.json()
-            download_url = result_json['download_url']
-            download_result = requests.get(download_url)
-            bin_file = download_result.content
-            return [
-                True, 
-                {"status_code": 200, "status_msg": f"read object [{file_name}] from container [{file_name}]"}, 
-                bin_file
-            ]
-        except Exception as e:
-            return [
-                False, 
-                {"status_code": 503, "status_msg": f"unable to read object [{file_name}] due to [{e}]."}, 
-                e
-            ]
     
     def write_blob(self, container_name, file_name, blob, branch_name, sha=None):
         """
@@ -764,7 +700,7 @@ class GitHubFunctions:
             # Get the updates from the dictionary
             updates_to_process = updates[container_name]['updates']
             # Loop through the updates, find the object(s) to update, and then perform the updates
-            for my_obj in updates.keys():
+            for my_obj in updates_to_process.keys():
                 obj_name = my_obj
                 obj = None
                 # Remove the object from the list of objects so we can add it back later
@@ -830,7 +766,7 @@ class GitHubFunctions:
                     ]
         
         # Release the containers
-        released = self.release_container(caught[2], f"Updated [{len(current_objects)}] [{container_name}] objects.")
+        released = self.release_container(caught[2], f"Updated [{len(current_objects)}] [{container_name}].")
         if not released[0]:
             return [
                 False,
@@ -842,7 +778,14 @@ class GitHubFunctions:
             ]
 
         # Return the updated object
-        return [True, {'status_code': 200, 'status_msg': 'Object updated successfully.'}, updates]
+        return [
+            True, 
+            {
+                'status_code': 200, 
+                'status_msg': f"Updated [{len(current_objects)}] [{container_name}] successfully."
+            }, 
+            current_objects
+        ]
 
     def delete_object(self, container_name, file_name, branch_name, sha):
         """
